@@ -2,66 +2,92 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f3a5f" />
+  <meta name="description" content="奈良県三郷町の3D防災マップ。地図をタップするだけで、その場所の洪水・土砂災害リスクと最寄りの避難場所がわかります。" />
   <title>さんごう防災3Dマップ｜奈良県三郷町</title>
   <link rel="stylesheet" href="./src/style.css" />
 </head>
 <body>
   <div id="cesiumContainer"></div>
 
-  <header id="appHeader">
-    <h1>さんごう防災3Dマップ</h1>
-    <p>奈良県三郷町 — PLATEAU 3D都市モデル × ハザードマップ</p>
-    <button id="panelToggle" aria-label="メニュー開閉">☰</button>
-  </header>
+  <!-- ブランド -->
+  <div id="brand" class="glass">
+    <span class="brand-mark">🛡️</span>
+    <span class="brand-text">さんごう防災3Dマップ<small>奈良県三郷町</small></span>
+  </div>
 
-  <aside id="controlPanel">
+  <!-- 住所検索 -->
+  <form id="searchBar" class="glass" autocomplete="off">
+    <input id="searchInput" type="search" inputmode="search"
+      placeholder="住所で探す (例: 勢野西1丁目)" aria-label="住所検索" />
+    <button type="submit" aria-label="検索">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+    </button>
+  </form>
+
+  <!-- フローティングボタン -->
+  <div id="fabs">
+    <button id="fabLocate" class="fab fab-primary" title="現在地のリスクを診断">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+      <span>現在地を診断</span>
+    </button>
+    <button id="fabHome" class="fab" title="全体を表示" aria-label="全体表示">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </button>
+    <button id="fabLayers" class="fab" title="レイヤと凡例" aria-label="レイヤ設定">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
+    </button>
+  </div>
+
+  <!-- レイヤパネル (デスクトップ: 左カード / モバイル: ボトムシート) -->
+  <aside id="panel" class="glass" hidden>
+    <div id="panelHandle" aria-hidden="true"></div>
+    <header>
+      <h2>レイヤと凡例</h2>
+      <button id="panelClose" aria-label="閉じる">✕</button>
+    </header>
+
     <section>
-      <h2>表示レイヤ</h2>
-      <label><input type="checkbox" id="layer-buildings" checked /> 3D建物モデル (PLATEAU)</label>
-      <label><input type="checkbox" id="layer-flood" checked /> 洪水浸水想定区域 (想定最大規模)</label>
-      <label><input type="checkbox" id="layer-dosekiryu" /> 土砂災害警戒区域 (土石流)</label>
-      <label><input type="checkbox" id="layer-kyukeisha" /> 土砂災害警戒区域 (急傾斜地)</label>
-      <label><input type="checkbox" id="layer-jisuberi" /> 土砂災害警戒区域 (地すべり)</label>
-      <label><input type="checkbox" id="layer-shelters" checked /> 避難場所・避難施設</label>
-      <label><input type="checkbox" id="layer-emergency_route" /> 緊急輸送道路</label>
-      <label><input type="checkbox" id="layer-border" /> 町域界</label>
-      <label><input type="checkbox" id="layer-photo" /> 航空写真ベースマップ</label>
-      <label class="slider-row">ハザード不透明度
-        <input type="range" id="hazardOpacity" min="0" max="100" value="65" />
+      <h3>災害リスク</h3>
+      <div class="chips" id="hazardChips"></div>
+      <label class="slider-row">重ね合わせの濃さ
+        <input type="range" id="hazardOpacity" min="10" max="100" value="65" />
       </label>
+      <ul id="floodLegend" class="legend" aria-label="浸水深の凡例"></ul>
     </section>
 
     <section>
-      <h2>地点リスク診断</h2>
-      <p class="hint">ボタンを押してから地図上の調べたい地点をクリックすると、その地点の浸水想定と最寄りの避難場所を表示します。</p>
-      <button id="diagnoseBtn">診断モード開始</button>
-      <div id="diagnoseResult" hidden></div>
+      <h3>防災施設・地図</h3>
+      <label class="switch-row"><input type="checkbox" id="layer-shelters" checked /><span class="switch"></span>避難場所</label>
+      <label class="switch-row"><input type="checkbox" id="layer-emergency_route" disabled /><span class="switch"></span>緊急輸送道路 <small id="er-note">読込中…</small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-border" disabled /><span class="switch"></span>町域界 <small id="border-note">読込中…</small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-buildings" checked /><span class="switch"></span>3D建物 (PLATEAU)</label>
+      <label class="switch-row"><input type="checkbox" id="layer-photo" /><span class="switch"></span>航空写真</label>
     </section>
 
-    <section>
-      <h2>浸水疑似体験</h2>
-      <p class="hint">大和川沿いの低地に仮想の水面を表示し、建物と浸水深を見比べられます。</p>
-      <label class="slider-row">浸水深 <span id="floodDepthLabel">0.0 m</span>
-        <input type="range" id="floodDepth" min="0" max="100" value="0" />
-      </label>
-    </section>
-
-    <section>
-      <h2>凡例 (浸水深)</h2>
-      <ul id="floodLegend" class="legend"></ul>
-    </section>
-
-    <section id="statusSection">
-      <h2>データ読み込み状況</h2>
+    <details id="statusDetails">
+      <summary>データ取得状況</summary>
       <ul id="statusList"></ul>
-    </section>
+    </details>
 
     <footer>
-      <p>出典: <a href="https://www.geospatial.jp/ckan/dataset/plateau-29343-sango-cho-2025" target="_blank" rel="noopener">PLATEAU 3D都市モデル (三郷町 2025)</a> / 国土地理院 <a href="https://disaportal.gsi.go.jp/" target="_blank" rel="noopener">重ねるハザードマップ</a>・指定緊急避難場所データ・地理院タイル</p>
-      <p>本アプリの表示は参考情報です。避難の判断は三郷町の公式情報に従ってください。</p>
+      <p>出典: <a href="https://www.geospatial.jp/ckan/dataset/plateau-29343-sango-cho-2025" target="_blank" rel="noopener">PLATEAU 3D都市モデル (三郷町 2025)</a>、国土地理院 (地理院タイル・重ねるハザードマップ・指定緊急避難場所)</p>
+      <p>本アプリは参考情報です。避難の判断は三郷町の公式情報・避難情報に従ってください。</p>
     </footer>
   </aside>
+
+  <!-- 診断結果カード -->
+  <div id="resultCard" class="glass" hidden>
+    <header>
+      <h2 id="resultTitle">この地点のリスク</h2>
+      <button id="resultClose" aria-label="閉じる">✕</button>
+    </header>
+    <div id="resultBody"></div>
+  </div>
+
+  <!-- トースト -->
+  <div id="toast" role="status" hidden></div>
 
   <script type="module" src="./src/main.js"></script>
 </body>

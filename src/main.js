@@ -1,31 +1,47 @@
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import {
-  HOME_VIEW, GSI_PALE, GSI_PHOTO,
+  HOME_VIEW, CITY_BBOX, GSI_PALE, GSI_PHOTO,
   PLATEAU_TERRAIN_ION_ASSET, PLATEAU_ION_TOKEN,
 } from './config.js';
 import { loadBuildingTilesets } from './plateau.js';
-import { createHazardLayer, FLOOD_DEPTH_CLASSES } from './hazards.js';
-import {
-  fetchShelters, fetchOfficialShelters, addShelterEntities, nearestShelter,
-} from './shelters.js';
+import { createHazardLayer, HAZARD_LAYERS, FLOOD_DEPTH_CLASSES } from './hazards.js';
+import { fetchShelters, addShelterEntities, nearestShelter } from './shelters.js';
 import { loadCityOverlay } from './citydata.js';
 import { diagnosePoint } from './risk.js';
-import { FloodSimulator } from './floodsim.js';
+import { compassDirection } from './lib/geomath.js';
 
-const statusList = document.getElementById('statusList');
+const $ = (id) => document.getElementById(id);
+
+// ---- 小さなUIユーティリティ ----
+let toastTimer = null;
+function toast(message, ms = 4000) {
+  const el = $('toast');
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, ms);
+}
+
 function setStatus(id, text, state = 'loading') {
   let li = document.getElementById(`status-${id}`);
   if (!li) {
     li = document.createElement('li');
     li.id = `status-${id}`;
-    statusList.appendChild(li);
+    $('statusList').appendChild(li);
   }
   li.textContent = text;
   li.dataset.state = state;
+  if (state === 'error') toast(text);
 }
 
-// ---- Viewer初期化 (ベースマップ: 地理院淡色) ----
+function escapeHtml(text) {
+  return String(text ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[c]);
+}
+
+// ---- Viewer初期化 ----
 Cesium.Ion.defaultAccessToken = PLATEAU_ION_TOKEN;
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -36,17 +52,18 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
       credit: new Cesium.Credit('地理院タイル'),
     })
   ),
+  animation: false,
+  timeline: false,
   baseLayerPicker: false,
   geocoder: false,
+  homeButton: false,
   sceneModePicker: false,
   navigationHelpButton: false,
-  homeButton: true,
-  timeline: false,
-  animation: false,
+  fullscreenButton: false,
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
 
-function flyHome(duration = 0) {
+function flyHome(duration = 1.2) {
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(HOME_VIEW.lon, HOME_VIEW.lat, HOME_VIEW.height),
     orientation: {
@@ -58,17 +75,14 @@ function flyHome(duration = 0) {
   });
 }
 flyHome(0);
-viewer.homeButton.viewModel.command.beforeExecute.addEventListener((e) => {
-  e.cancel = true;
-  flyHome(1.2);
-});
+$('fabHome').addEventListener('click', () => flyHome());
 
-// ---- PLATEAU地形 (取得できなければ楕円体のまま) ----
-setStatus('terrain', '地形: 読み込み中…');
+// ---- PLATEAU地形 (失敗時は平坦のまま) ----
+setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み中…');
 Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET)
   .then((tp) => {
     viewer.terrainProvider = tp;
-    setStatus('terrain', '地形: PLATEAU-Terrain 読み込み完了', 'ok');
+    setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み完了', 'ok');
   })
   .catch(() => setStatus('terrain', '地形: 取得不可のため平坦表示', 'warn'));
 
@@ -78,41 +92,52 @@ let buildingTilesets = [];
 loadBuildingTilesets(viewer, (msg) => setStatus('bldg', `3D建物: ${msg}`))
   .then(({ tilesets }) => {
     buildingTilesets = tilesets;
-    setStatus('bldg', `3D建物: 読み込み完了 (${tilesets.length}タイルセット)`, 'ok');
+    for (const t of tilesets) t.show = $('layer-buildings').checked;
+    setStatus('bldg', '3D建物: 読み込み完了', 'ok');
   })
   .catch((err) => {
     console.error(err);
     setStatus('bldg', `3D建物: 読み込み失敗 — ${err.message}`, 'error');
   });
+$('layer-buildings').addEventListener('change', (e) => {
+  for (const t of buildingTilesets) t.show = e.target.checked;
+});
 
-// ---- ハザードレイヤ ----
-const opacityInput = document.getElementById('hazardOpacity');
-const initialAlpha = Number(opacityInput.value) / 100;
-const hazardLayers = {
-  flood: createHazardLayer(viewer, 'flood', initialAlpha),
-  dosekiryu: createHazardLayer(viewer, 'dosekiryu', initialAlpha),
-  kyukeisha: createHazardLayer(viewer, 'kyukeisha', initialAlpha),
-  jisuberi: createHazardLayer(viewer, 'jisuberi', initialAlpha),
-};
-hazardLayers.flood.show = true;
-
-for (const key of Object.keys(hazardLayers)) {
-  document.getElementById(`layer-${key}`).addEventListener('change', (e) => {
-    hazardLayers[key].show = e.target.checked;
+// ---- ハザードレイヤ (チップUI) ----
+const opacityInput = $('hazardOpacity');
+const hazardLayers = {};
+const chipsBox = $('hazardChips');
+for (const [key, def] of Object.entries(HAZARD_LAYERS)) {
+  hazardLayers[key] = createHazardLayer(viewer, key, Number(opacityInput.value) / 100);
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'chip';
+  chip.style.setProperty('--dot', def.color);
+  chip.setAttribute('aria-pressed', 'false');
+  chip.innerHTML = `<span class="dot"></span>${def.label}`;
+  chip.addEventListener('click', () => {
+    const on = chip.getAttribute('aria-pressed') !== 'true';
+    chip.setAttribute('aria-pressed', String(on));
+    hazardLayers[key].show = on;
   });
+  chipsBox.appendChild(chip);
+  if (key === 'flood') chip.click(); // 洪水は初期表示
 }
 opacityInput.addEventListener('input', () => {
   const alpha = Number(opacityInput.value) / 100;
   for (const layer of Object.values(hazardLayers)) layer.alpha = alpha;
 });
 
-document.getElementById('layer-buildings').addEventListener('change', (e) => {
-  for (const t of buildingTilesets) t.show = e.target.checked;
-});
+// 凡例
+for (const cls of FLOOD_DEPTH_CLASSES) {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="swatch" style="background:${cls.css}"></span>${cls.label}`;
+  $('floodLegend').appendChild(li);
+}
 
-// 航空写真ベースマップ切替
+// ---- 航空写真 ----
 let photoLayer = null;
-document.getElementById('layer-photo').addEventListener('change', (e) => {
+$('layer-photo').addEventListener('change', (e) => {
   if (e.target.checked && !photoLayer) {
     photoLayer = viewer.imageryLayers.addImageryProvider(
       new Cesium.UrlTemplateImageryProvider({
@@ -131,138 +156,221 @@ document.getElementById('layer-photo').addEventListener('change', (e) => {
 setStatus('shelter', '避難場所: 読み込み中…');
 let shelters = [];
 let shelterEntities = [];
-(async () => {
-  try {
-    // 町公式データ (同梱GeoJSON) を優先し、なければ地理院データ
-    const official = await fetchOfficialShelters();
-    shelters = official ?? (await fetchShelters());
-    shelterEntities = addShelterEntities(viewer, shelters);
-    setStatus(
-      'shelter',
-      `避難場所: ${shelters.length}件 (${official ? '三郷町公式データ' : '地理院データ'})`,
-      'ok'
-    );
-  } catch (err) {
+fetchShelters()
+  .then(({ shelters: list, source }) => {
+    shelters = list;
+    shelterEntities = addShelterEntities(viewer, list);
+    for (const ent of shelterEntities) ent.show = $('layer-shelters').checked;
+    setStatus('shelter', `避難場所: ${list.length}件 (${source})`, 'ok');
+  })
+  .catch((err) => {
     console.error(err);
     setStatus('shelter', '避難場所: 読み込み失敗', 'error');
-  }
-})();
-
-// 町データオーバーレイ (緊急輸送道路・町域界)。GeoJSON未配置ならチェックボックスを無効化。
-for (const key of ['emergency_route', 'border']) {
-  const checkbox = document.getElementById(`layer-${key}`);
-  loadCityOverlay(viewer, key)
-    .then((ds) => {
-      if (!ds) {
-        checkbox.disabled = true;
-        return;
-      }
-      checkbox.addEventListener('change', (e) => {
-        ds.show = e.target.checked;
-      });
-    })
-    .catch(() => {
-      checkbox.disabled = true;
-    });
-}
-document.getElementById('layer-shelters').addEventListener('change', (e) => {
+  });
+$('layer-shelters').addEventListener('change', (e) => {
   for (const ent of shelterEntities) ent.show = e.target.checked;
 });
 
-// ---- 浸水疑似体験 ----
-const floodSim = new FloodSimulator(viewer);
-const depthInput = document.getElementById('floodDepth');
-const depthLabel = document.getElementById('floodDepthLabel');
-depthInput.addEventListener('input', () => {
-  const depth = Number(depthInput.value) / 10; // 0〜10.0m
-  depthLabel.textContent = `${depth.toFixed(1)} m`;
-  floodSim.setDepth(depth);
-});
-
-// ---- 凡例 ----
-const legend = document.getElementById('floodLegend');
-for (const cls of FLOOD_DEPTH_CLASSES) {
-  const li = document.createElement('li');
-  li.innerHTML = `<span class="swatch" style="background:${cls.css}"></span>${cls.label}`;
-  legend.appendChild(li);
+// ---- 町データオーバーレイ (緊急輸送道路・町域界) ----
+for (const [key, noteId] of [['emergency_route', 'er-note'], ['border', 'border-note']]) {
+  const checkbox = $(`layer-${key}`);
+  const note = $(noteId);
+  loadCityOverlay(viewer, key)
+    .then((ds) => {
+      if (!ds) {
+        note.textContent = '(データ取得不可)';
+        return;
+      }
+      checkbox.disabled = false;
+      note.textContent = '';
+      checkbox.addEventListener('change', (e) => { ds.show = e.target.checked; });
+    })
+    .catch(() => { note.textContent = '(データ取得不可)'; });
 }
 
-// ---- 地点リスク診断 ----
-const diagnoseBtn = document.getElementById('diagnoseBtn');
-const resultBox = document.getElementById('diagnoseResult');
-let diagnosing = false;
-let marker = null;
+// ---- パネル開閉 ----
+const panel = $('panel');
+$('fabLayers').addEventListener('click', () => { panel.hidden = !panel.hidden; });
+$('panelClose').addEventListener('click', () => { panel.hidden = true; });
+if (window.matchMedia('(min-width: 641px)').matches) panel.hidden = false;
 
-diagnoseBtn.addEventListener('click', () => {
-  diagnosing = !diagnosing;
-  diagnoseBtn.textContent = diagnosing ? '診断モード中 (地図をクリック)' : '診断モード開始';
-  diagnoseBtn.classList.toggle('active', diagnosing);
-  viewer.canvas.style.cursor = diagnosing ? 'crosshair' : '';
+// ---- 地点リスク診断 ----
+const resultCard = $('resultCard');
+$('resultClose').addEventListener('click', () => {
+  resultCard.hidden = true;
+  if (marker) marker.show = false;
 });
 
+let marker = null;
+function showMarker(lon, lat) {
+  if (!marker) {
+    marker = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(lon, lat),
+      point: {
+        pixelSize: 13,
+        color: Cesium.Color.fromCssColorString('#f97316'),
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 3,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+    });
+  }
+  marker.position = Cesium.Cartesian3.fromDegrees(lon, lat);
+  marker.show = true;
+}
+
+const inCity = (lon, lat) =>
+  lon >= CITY_BBOX.west && lon <= CITY_BBOX.east &&
+  lat >= CITY_BBOX.south && lat <= CITY_BBOX.north;
+
+async function runDiagnosis(lon, lat, placeName) {
+  showMarker(lon, lat);
+  $('resultTitle').textContent = placeName ?? 'この地点のリスク';
+  $('resultBody').innerHTML = '<div class="loading-dots">診断中…</div>';
+  resultCard.hidden = false;
+  panel.hidden = true;
+
+  try {
+    const risk = await diagnosePoint(lon, lat);
+    const rows = [];
+
+    if (risk.flood) {
+      rows.push(`
+        <div class="risk-row bad">
+          <span class="icon">🌊</span>
+          <div>洪水で <span class="depth-chip" style="background:${risk.flood.css}">${risk.flood.label}</span> の浸水が想定されています
+            <span class="advice">${risk.flood.advice ?? ''}</span></div>
+        </div>`);
+    } else {
+      rows.push(`
+        <div class="risk-row ok"><span class="icon">🌊</span>
+          <div>洪水の浸水想定区域<b>外</b>です</div></div>`);
+    }
+
+    const ls = risk.landslide;
+    const lsTypes = [
+      ls.dosekiryu && '土石流',
+      ls.kyukeisha && '急傾斜地の崩壊',
+      ls.jisuberi && '地すべり',
+    ].filter(Boolean);
+    if (lsTypes.length) {
+      rows.push(`
+        <div class="risk-row bad"><span class="icon">⛰️</span>
+          <div>土砂災害警戒区域 (<b>${lsTypes.join('・')}</b>) に該当する可能性があります
+            <span class="advice">大雨のときは早めに区域の外へ避難してください</span></div></div>`);
+    } else {
+      rows.push(`
+        <div class="risk-row ok"><span class="icon">⛰️</span>
+          <div>土砂災害警戒区域<b>外</b>です</div></div>`);
+    }
+
+    const filter = risk.flood ? '洪水' : lsTypes.length ? '土砂' : null;
+    const nearest = shelters.length ? nearestShelter(shelters, lon, lat, filter) : null;
+    if (nearest) {
+      const { shelter: s, dist } = nearest;
+      const minutes = Math.max(1, Math.ceil(dist / 80)); // 徒歩80m/分
+      const dir = compassDirection(lon, lat, s.lon, s.lat);
+      rows.push(`
+        <div class="shelter-row">🏃 最寄りの避難場所
+          <div><b>${escapeHtml(s.name)}</b></div>
+          <div class="meta">${dir}へ約${Math.round(dist)}m・徒歩約${minutes}分${s.kind ? `・${escapeHtml(s.kind)}` : ''}</div>
+          <a class="route-link" target="_blank" rel="noopener"
+             href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${s.lat},${s.lon}&travelmode=walking">
+             経路を見る</a>
+        </div>`);
+    }
+
+    if (!inCity(lon, lat)) {
+      rows.push('<p class="result-note">⚠️ この地点は三郷町の外です。表示は全国データに基づく参考値です。</p>');
+    }
+    rows.push('<p class="result-note">出典: ハザードマップポータルサイト (想定最大規模)。参考情報であり、実際の災害はこれと異なる場合があります。</p>');
+    $('resultBody').innerHTML = rows.join('');
+  } catch (err) {
+    console.error(err);
+    $('resultBody').innerHTML =
+      '<p class="result-note">診断に失敗しました。通信状況をご確認のうえ、もう一度お試しください。</p>';
+  }
+}
+
+// 地図タップで診断 (避難所アイコンのタップ時は通常の情報表示を優先)
 const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
-handler.setInputAction(async (movement) => {
-  if (!diagnosing) return;
+handler.setInputAction((movement) => {
+  const picked = viewer.scene.pick(movement.position);
+  if (Cesium.defined(picked) && picked.id instanceof Cesium.Entity && picked.id !== marker) {
+    return; // 既存エンティティの選択を優先
+  }
   const cartesian =
     viewer.scene.pickPosition(movement.position) ??
     viewer.camera.pickEllipsoid(movement.position, viewer.scene.globe.ellipsoid);
   if (!cartesian) return;
   const carto = Cesium.Cartographic.fromCartesian(cartesian);
-  const lon = Cesium.Math.toDegrees(carto.longitude);
-  const lat = Cesium.Math.toDegrees(carto.latitude);
-
-  if (marker) viewer.entities.remove(marker);
-  marker = viewer.entities.add({
-    position: Cesium.Cartesian3.fromDegrees(lon, lat),
-    point: {
-      pixelSize: 12,
-      color: Cesium.Color.ORANGE,
-      outlineColor: Cesium.Color.WHITE,
-      outlineWidth: 2,
-      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-    },
-  });
-
-  resultBox.hidden = false;
-  resultBox.innerHTML = '<p>診断中…</p>';
-  try {
-    const risk = await diagnosePoint(lon, lat);
-    const parts = [];
-    parts.push(
-      risk.flood
-        ? `<p class="risk-bad">🌊 洪水: 浸水想定 <b>${risk.flood.label}</b></p>`
-        : '<p class="risk-ok">🌊 洪水: 浸水想定区域外</p>'
-    );
-    const ls = risk.landslide;
-    const lsTypes = [
-      ls.dosekiryu && '土石流',
-      ls.kyukeisha && '急傾斜地',
-      ls.jisuberi && '地すべり',
-    ].filter(Boolean);
-    parts.push(
-      lsTypes.length
-        ? `<p class="risk-bad">⛰️ 土砂災害警戒区域: <b>${lsTypes.join('・')}</b></p>`
-        : '<p class="risk-ok">⛰️ 土砂災害警戒区域外</p>'
-    );
-
-    const disasterFilter = risk.flood ? '洪水' : lsTypes.length ? '土' : null;
-    const nearest = nearestShelter(shelters, lon, lat, disasterFilter)
-      ?? nearestShelter(shelters, lon, lat, null);
-    if (nearest) {
-      parts.push(
-        `<p>🏃 最寄り避難場所: <b>${nearest.shelter.name}</b> (約${Math.round(nearest.dist)}m)</p>`
-      );
-    }
-    parts.push(`<p class="hint">地点: ${lat.toFixed(5)}, ${lon.toFixed(5)}（参考情報）</p>`);
-    resultBox.innerHTML = parts.join('');
-  } catch (err) {
-    console.error(err);
-    resultBox.innerHTML = '<p>診断に失敗しました。通信状況をご確認ください。</p>';
-  }
+  runDiagnosis(
+    Cesium.Math.toDegrees(carto.longitude),
+    Cesium.Math.toDegrees(carto.latitude)
+  );
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-// ---- パネル開閉 (モバイル) ----
-document.getElementById('panelToggle').addEventListener('click', () => {
-  document.getElementById('controlPanel').classList.toggle('open');
+// ---- 現在地診断 ----
+$('fabLocate').addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    toast('この端末では現在地を取得できません');
+    return;
+  }
+  toast('現在地を取得しています…', 8000);
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { longitude: lon, latitude: lat } = pos.coords;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.008, 1500),
+        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-40), roll: 0 },
+        duration: 1.5,
+      });
+      runDiagnosis(lon, lat, '現在地のリスク');
+    },
+    () => toast('現在地を取得できませんでした。位置情報の許可を確認してください。'),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
 });
+
+// ---- 住所検索 (地理院ジオコーダ) ----
+$('searchBar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = $('searchInput').value.trim();
+  if (!q) return;
+  const search = async (query) => {
+    const res = await fetch(
+      `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`
+    );
+    if (!res.ok) return [];
+    return res.json();
+  };
+  try {
+    let results = await search(q.includes('三郷') ? q : `奈良県生駒郡三郷町${q}`);
+    if (!results.length) results = await search(q);
+    if (!results.length) {
+      toast(`「${q}」が見つかりませんでした`);
+      return;
+    }
+    const hit = results[0];
+    const [lon, lat] = hit.geometry.coordinates;
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.008, 1500),
+      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-40), roll: 0 },
+      duration: 1.5,
+    });
+    runDiagnosis(lon, lat, hit.properties?.title ?? q);
+    $('searchInput').blur();
+  } catch (err) {
+    console.error(err);
+    toast('検索に失敗しました。通信状況をご確認ください。');
+  }
+});
+
+// ---- 初回ヒント ----
+if (!localStorage.getItem('sango-hint-shown')) {
+  setTimeout(() => {
+    toast('地図をタップすると、その場所の災害リスクと最寄りの避難場所がわかります', 7000);
+    localStorage.setItem('sango-hint-shown', '1');
+  }, 1500);
+}
