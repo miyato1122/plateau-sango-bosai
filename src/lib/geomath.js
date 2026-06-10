@@ -106,6 +106,114 @@ export function nearestShelter(shelters, lon, lat, disasterFilter = null) {
   return pick(disasterFilter) ?? pick(null);
 }
 
+// 各浸水深クラスの代表水深 (m) — 3D水柱の高さに使う (クラス幅の中庸値)
+export const DEPTH_REPRESENTATIVE = [0.3, 1.5, 4, 7.5, 15, 22];
+
+// ピクセル色 → 浸水深クラスの添字 (-1 = 浸水なし/判定不能)
+export function floodClassIndex(pixel, tolerance = 60) {
+  const cls = classifyFloodDepth(pixel, tolerance);
+  if (!cls) return -1;
+  return FLOOD_DEPTH_CLASSES.indexOf(cls); // 「深さ不明」は -1 になる
+}
+
+// Webメルカトルのピクセル解像度 (m/px)
+export function metersPerPixel(z, lat, tileSize = 256) {
+  return (
+    (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (2 ** z * tileSize)
+  );
+}
+
+// タイル座標 → 北西角の経度緯度
+export function tileToLonLat(x, y, z) {
+  const n = 2 ** z;
+  const lon = (x / n) * 360 - 180;
+  const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n)));
+  return { lon, lat: (latRad * 180) / Math.PI };
+}
+
+// 地理院 標高PNGタイルのデコード (https://maps.gsi.go.jp/development/demtile.html)
+// x = r*65536 + g*256 + b。x < 2^23 → h = x*0.01m、x = 2^23 → 無効、x > 2^23 → h = (x-2^24)*0.01m
+export function gsiDemDecode(r, g, b) {
+  const x = r * 65536 + g * 256 + b;
+  if (x === 8388608) return null;
+  return (x < 8388608 ? x : x - 16777216) * 0.01;
+}
+
+// 建物属性値 → 浸水深クラス添字。
+// PLATEAUの浸水ランク (数値1〜6) と文字列表現 ("0.5m未満" "3.0m以上5.0m未満" 等) の両方に対応。
+const RANK_BOUNDS = [0, 0.5, 3, 5, 10, 20];
+export function parseFloodRank(value) {
+  if (value == null || value === '') return -1;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value >= 1 && value <= 6) return Math.round(value) - 1;
+    return -1;
+  }
+  const text = String(value);
+  const m = text.match(/(\d+(?:\.\d+)?)\s*m/);
+  if (!m) return -1;
+  const num = Number.parseFloat(m[1]);
+  if (/未満/.test(text) && !/以上/.test(text)) {
+    // "0.5m未満" → 上限がnum
+    for (let i = RANK_BOUNDS.length - 1; i >= 0; i--) {
+      if (num > RANK_BOUNDS[i]) return i;
+    }
+    return 0;
+  }
+  // "3.0m以上…" / "20m以上" → 下限がnum
+  for (let i = RANK_BOUNDS.length - 1; i >= 0; i--) {
+    if (num >= RANK_BOUNDS[i]) return i;
+  }
+  return -1;
+}
+
+// 3D Tilesの属性名一覧から浸水ランク・階数・高さの属性を推定する
+export function detectRiskProperties(names) {
+  const rankCandidates = names.filter(
+    (n) => /(浸水|洪水|flood)/i.test(n) && /(ランク|rank|深)/i.test(n)
+  );
+  // 想定最大規模 (L2) を優先、計画規模のみの属性は後回し
+  rankCandidates.sort((a, b) => {
+    const score = (n) => (/想定最大|L2/i.test(n) ? 0 : /計画規模|L1/i.test(n) ? 2 : 1);
+    return score(a) - score(b);
+  });
+  return {
+    rank: rankCandidates[0] ?? null,
+    storeys: names.find((n) => /storeysAboveGround|地上.*階数/i.test(n)) ?? null,
+    height: names.find((n) => /measuredHeight|計測.*高さ/i.test(n)) ?? null,
+  };
+}
+
+// 階数の推定 (階数属性がなければ高さ÷3mで概算)
+export function estimateStoreys(storeysValue, heightValue) {
+  const s = Number(storeysValue);
+  if (Number.isFinite(s) && s > 0) return Math.round(s);
+  const h = Number(heightValue);
+  if (Number.isFinite(h) && h > 0) return Math.max(1, Math.round(h / 3));
+  return null;
+}
+
+// 建物リスク統計のアキュムレータ
+export function createBuildingStats() {
+  return {
+    total: 0,
+    byClass: new Array(FLOOD_DEPTH_CLASSES.length).fill(0),
+    noRisk: 0,
+    verticalEvacuationRisk: 0, // 3m以上の浸水想定かつ2階建て以下
+  };
+}
+
+export function accumulateBuilding(stats, classIdx, storeys) {
+  stats.total += 1;
+  if (classIdx < 0) {
+    stats.noRisk += 1;
+    return;
+  }
+  stats.byClass[classIdx] += 1;
+  if (classIdx >= 2 && storeys != null && storeys <= 2) {
+    stats.verticalEvacuationRisk += 1;
+  }
+}
+
 // PLATEAUデータカタログから建築物3D Tilesを選ぶ (高LOD・テクスチャ優先)
 export function pickBuildingDatasets(datasets) {
   const bldg = datasets.filter(

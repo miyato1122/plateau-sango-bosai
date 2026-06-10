@@ -35,6 +35,9 @@
     <button id="fabHome" class="fab" title="全体を表示" aria-label="全体表示">
       <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     </button>
+    <button id="fabDash" class="fab" title="町全体の統計" aria-label="町全体の統計">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
+    </button>
     <button id="fabLayers" class="fab" title="レイヤと凡例" aria-label="レイヤ設定">
       <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
     </button>
@@ -55,6 +58,8 @@
         <input type="range" id="hazardOpacity" min="10" max="100" value="65" />
       </label>
       <ul id="floodLegend" class="legend" aria-label="浸水深の凡例"></ul>
+      <label class="switch-row"><input type="checkbox" id="layer-water3d" /><span class="switch"></span>浸水深を3Dで体感 <small id="water3d-note"></small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-bldgrisk" /><span class="switch"></span>建物をリスク別に色分け <small id="bldgrisk-note"></small></label>
     </section>
 
     <section>
@@ -76,6 +81,22 @@
       <p>本アプリは参考情報です。避難の判断は三郷町の公式情報・避難情報に従ってください。</p>
     </footer>
   </aside>
+
+  <!-- 町全体統計ダッシュボード -->
+  <div id="dashCard" class="glass" hidden>
+    <header>
+      <h2>📊 三郷町全体の浸水リスク統計</h2>
+      <button id="dashClose" aria-label="閉じる">✕</button>
+    </header>
+    <section>
+      <h3>浸水想定面積 (想定最大規模)</h3>
+      <div id="dashArea"></div>
+    </section>
+    <section>
+      <h3>建物別リスク (PLATEAU属性)</h3>
+      <div id="dashBuildings"></div>
+    </section>
+  </div>
 
   <!-- 診断結果カード -->
   <div id="resultCard" class="glass" hidden>

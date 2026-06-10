@@ -10,6 +10,9 @@ import { fetchShelters, addShelterEntities, nearestShelter } from './shelters.js
 import { loadCityOverlay } from './citydata.js';
 import { diagnosePoint } from './risk.js';
 import { compassDirection } from './lib/geomath.js';
+import { BuildingRiskAnalyzer } from './buildingrisk.js';
+import { buildWaterColumns } from './floodgrid.js';
+import { initDashboard } from './dashboard.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -86,13 +89,17 @@ Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET)
   })
   .catch(() => setStatus('terrain', '地形: 取得不可のため平坦表示', 'warn'));
 
-// ---- PLATEAU 3D建物 ----
+// ---- PLATEAU 3D建物 + 建物単位リスク分析 ----
 setStatus('bldg', '3D建物: データカタログ照会中…');
+const riskAnalyzer = new BuildingRiskAnalyzer();
 let buildingTilesets = [];
 loadBuildingTilesets(viewer, (msg) => setStatus('bldg', `3D建物: ${msg}`))
   .then(({ tilesets }) => {
     buildingTilesets = tilesets;
-    for (const t of tilesets) t.show = $('layer-buildings').checked;
+    for (const t of tilesets) {
+      t.show = $('layer-buildings').checked;
+      riskAnalyzer.attach(t);
+    }
     setStatus('bldg', '3D建物: 読み込み完了', 'ok');
   })
   .catch((err) => {
@@ -187,6 +194,60 @@ for (const [key, noteId] of [['emergency_route', 'er-note'], ['border', 'border-
     })
     .catch(() => { note.textContent = '(データ取得不可)'; });
 }
+
+// ---- 建物リスク色分け ----
+$('layer-bldgrisk').addEventListener('change', (e) => {
+  if (e.target.checked && !riskAnalyzer.hasRiskAttributes()) {
+    $('bldgrisk-note').textContent =
+      riskAnalyzer.stats.total === 0 ? '(建物の読み込み待ち)' : '(この都市モデルに浸水ランク属性なし)';
+    if (riskAnalyzer.stats.total > 0) {
+      // 属性が無い場合はチェックを戻す
+      e.target.checked = false;
+      toast('この3D都市モデルには建物単位の浸水ランク属性が含まれていません');
+      return;
+    }
+  } else {
+    $('bldgrisk-note').textContent = '';
+  }
+  riskAnalyzer.setColoring(buildingTilesets, e.target.checked);
+  viewer.scene.requestRender?.();
+});
+
+// ---- 浸水深の3D表示 (高さ付き水柱) ----
+let waterPrimitive = null;
+let waterLoading = false;
+$('layer-water3d').addEventListener('change', async (e) => {
+  const note = $('water3d-note');
+  if (waterPrimitive) {
+    waterPrimitive.show = e.target.checked;
+    return;
+  }
+  if (!e.target.checked || waterLoading) return;
+  waterLoading = true;
+  try {
+    note.textContent = '(解析中…)';
+    waterPrimitive = await buildWaterColumns(viewer, (done, total) => {
+      note.textContent = `(解析中… ${done}/${total})`;
+    });
+    if (!waterPrimitive) {
+      note.textContent = '(データ取得不可)';
+      e.target.checked = false;
+      return;
+    }
+    note.textContent = '';
+    waterPrimitive.show = $('layer-water3d').checked;
+  } catch (err) {
+    console.error(err);
+    note.textContent = '(取得失敗)';
+    e.target.checked = false;
+    toast('浸水深データの解析に失敗しました');
+  } finally {
+    waterLoading = false;
+  }
+});
+
+// ---- 町全体統計ダッシュボード ----
+initDashboard(riskAnalyzer);
 
 // ---- パネル開閉 ----
 const panel = $('panel');
