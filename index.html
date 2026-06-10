@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>さんごう防災3Dマップ｜奈良県三郷町</title>
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+
+  <header id="appHeader">
+    <h1>さんごう防災3Dマップ</h1>
+    <p>奈良県三郷町 — PLATEAU 3D都市モデル × ハザードマップ</p>
+    <button id="panelToggle" aria-label="メニュー開閉">☰</button>
+  </header>
+
+  <aside id="controlPanel">
+    <section>
+      <h2>表示レイヤ</h2>
+      <label><input type="checkbox" id="layer-buildings" checked /> 3D建物モデル (PLATEAU)</label>
+      <label><input type="checkbox" id="layer-flood" checked /> 洪水浸水想定区域 (想定最大規模)</label>
+      <label><input type="checkbox" id="layer-dosekiryu" /> 土砂災害警戒区域 (土石流)</label>
+      <label><input type="checkbox" id="layer-kyukeisha" /> 土砂災害警戒区域 (急傾斜地)</label>
+      <label><input type="checkbox" id="layer-jisuberi" /> 土砂災害警戒区域 (地すべり)</label>
+      <label><input type="checkbox" id="layer-shelters" checked /> 指定緊急避難場所</label>
+      <label><input type="checkbox" id="layer-photo" /> 航空写真ベースマップ</label>
+      <label class="slider-row">ハザード不透明度
+        <input type="range" id="hazardOpacity" min="0" max="100" value="65" />
+      </label>
+    </section>
+
+    <section>
+      <h2>地点リスク診断</h2>
+      <p class="hint">ボタンを押してから地図上の調べたい地点をクリックすると、その地点の浸水想定と最寄りの避難場所を表示します。</p>
+      <button id="diagnoseBtn">診断モード開始</button>
+      <div id="diagnoseResult" hidden></div>
+    </section>
+
+    <section>
+      <h2>浸水疑似体験</h2>
+      <p class="hint">大和川沿いの低地に仮想の水面を表示し、建物と浸水深を見比べられます。</p>
+      <label class="slider-row">浸水深 <span id="floodDepthLabel">0.0 m</span>
+        <input type="range" id="floodDepth" min="0" max="100" value="0" />
+      </label>
+    </section>
+
+    <section>
+      <h2>凡例 (浸水深)</h2>
+      <ul id="floodLegend" class="legend"></ul>
+    </section>
+
+    <section id="statusSection">
+      <h2>データ読み込み状況</h2>
+      <ul id="statusList"></ul>
+    </section>
+
+    <footer>
+      <p>出典: <a href="https://www.geospatial.jp/ckan/dataset/plateau-29343-sango-cho-2025" target="_blank" rel="noopener">PLATEAU 3D都市モデル (三郷町 2025)</a> / 国土地理院 <a href="https://disaportal.gsi.go.jp/" target="_blank" rel="noopener">重ねるハザードマップ</a>・指定緊急避難場所データ・地理院タイル</p>
+      <p>本アプリの表示は参考情報です。避難の判断は三郷町の公式情報に従ってください。</p>
+    </footer>
+  </aside>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
