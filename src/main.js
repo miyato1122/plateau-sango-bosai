@@ -6,7 +6,10 @@ import {
 } from './config.js';
 import { loadBuildingTilesets } from './plateau.js';
 import { createHazardLayer, FLOOD_DEPTH_CLASSES } from './hazards.js';
-import { fetchShelters, addShelterEntities, nearestShelter } from './shelters.js';
+import {
+  fetchShelters, fetchOfficialShelters, addShelterEntities, nearestShelter,
+} from './shelters.js';
+import { loadCityOverlay } from './citydata.js';
 import { diagnosePoint } from './risk.js';
 import { FloodSimulator } from './floodsim.js';
 
@@ -128,16 +131,40 @@ document.getElementById('layer-photo').addEventListener('change', (e) => {
 setStatus('shelter', '避難場所: 読み込み中…');
 let shelters = [];
 let shelterEntities = [];
-fetchShelters()
-  .then((list) => {
-    shelters = list;
-    shelterEntities = addShelterEntities(viewer, list);
-    setStatus('shelter', `避難場所: ${list.length}件 読み込み完了`, 'ok');
-  })
-  .catch((err) => {
+(async () => {
+  try {
+    // 町公式データ (同梱GeoJSON) を優先し、なければ地理院データ
+    const official = await fetchOfficialShelters();
+    shelters = official ?? (await fetchShelters());
+    shelterEntities = addShelterEntities(viewer, shelters);
+    setStatus(
+      'shelter',
+      `避難場所: ${shelters.length}件 (${official ? '三郷町公式データ' : '地理院データ'})`,
+      'ok'
+    );
+  } catch (err) {
     console.error(err);
     setStatus('shelter', '避難場所: 読み込み失敗', 'error');
-  });
+  }
+})();
+
+// 町データオーバーレイ (緊急輸送道路・町域界)。GeoJSON未配置ならチェックボックスを無効化。
+for (const key of ['emergency_route', 'border']) {
+  const checkbox = document.getElementById(`layer-${key}`);
+  loadCityOverlay(viewer, key)
+    .then((ds) => {
+      if (!ds) {
+        checkbox.disabled = true;
+        return;
+      }
+      checkbox.addEventListener('change', (e) => {
+        ds.show = e.target.checked;
+      });
+    })
+    .catch(() => {
+      checkbox.disabled = true;
+    });
+}
 document.getElementById('layer-shelters').addEventListener('change', (e) => {
   for (const ent of shelterEntities) ent.show = e.target.checked;
 });

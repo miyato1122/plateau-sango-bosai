@@ -36,6 +36,34 @@ function* bboxTiles(bbox, z) {
   }
 }
 
+// 三郷町公式の避難施設GeoJSON (PLATEAU関連データセット、public/data/に同梱)。
+// 存在しない場合はnullを返し、呼び出し側で地理院データにフォールバックする。
+export async function fetchOfficialShelters() {
+  const res = await fetch('./data/shelter.geojson').catch(() => null);
+  if (!res?.ok) return null;
+  const geojson = await res.json();
+  const shelters = [];
+  for (const f of geojson.features ?? []) {
+    if (f.geometry?.type !== 'Point') continue;
+    const [lon, lat] = f.geometry.coordinates;
+    const p = f.properties ?? {};
+    const capacity = p['収容人数'];
+    shelters.push({
+      lon, lat,
+      name: p['名称'] ?? '避難施設',
+      address: p['住所'] ?? '',
+      kind: p['施設の種類'] ?? '',
+      capacity: capacity > 0 ? capacity : null,
+      disasters: (p['対象とする災害の分類'] ?? '')
+        .split(/[、,;]/)
+        .map((s) => s.trim())
+        .filter((s) => s && s !== '指定なし'),
+      official: true,
+    });
+  }
+  return shelters.length > 0 ? shelters : null;
+}
+
 // 町域bbox内の指定緊急避難場所を全災害種別レイヤから取得し、
 // 同一地点 (座標+名称) をマージして対応災害種別を集約する。
 export async function fetchShelters() {
@@ -104,8 +132,10 @@ export function addShelterEntities(viewer, shelters) {
       description: `
         <h3>${s.name}</h3>
         <p>${s.address}</p>
-        <p><b>対応災害種別:</b> ${s.disasters.join('、') || '—'}</p>
-        <p>出典: 国土地理院 指定緊急避難場所データ</p>`,
+        ${s.kind ? `<p><b>施設の種類:</b> ${s.kind}</p>` : ''}
+        ${s.capacity ? `<p><b>収容人数:</b> ${s.capacity}人</p>` : ''}
+        <p><b>対応災害種別:</b> ${s.disasters.join('、') || '指定なし'}</p>
+        <p>出典: ${s.official ? 'PLATEAU 三郷町関連データセット (避難施設)' : '国土地理院 指定緊急避難場所データ'}</p>`,
     });
     entities.push(entity);
   }

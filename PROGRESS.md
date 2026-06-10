@@ -68,6 +68,13 @@
 - **CP1/CP2** (2026-06-10): Vite+CesiumJS雛形、F1〜F6実装、`npm run build` 成功、`node --check` 全ファイル通過。データカタログはGraphQLでなくREST (`/datacatalog/plateau-datasets`、公式チュートリアルでスキーマ確認済) を採用。PLATEAU-Terrain (Ionアセット2488101、チュートリアル掲載公開トークン) を使用し、失敗時は楕円体へフォールバック。
 - **CP3** (2026-06-10): README全面改訂、GitHub Pagesデプロイワークフロー追加、完了。
 
+- **CP4** (2026-06-10): 関連データセット統合。経緯と現状:
+  - 大容量zip (CityGML 116MB / 3D Tiles 35MB) は**不要**と判断 — アプリは配信APIストリーミングで動作するため
+  - `29343_sango-cho_2025_related.zip` (17KB) はGoogle Drive MCP経由でbase64取得に成功したが、コンテキスト経由の転記でバイナリ再現に失敗 (CRC不一致)。**復元データは座標の正確性を保証できないため不採用**
+  - 復元JSONからスキーマのみ確認: shelter.geojson = Point, 属性 `名称`/`住所`/`施設の種類`/`対象とする災害の分類`/`収容人数`/`レベル` (46件)
+  - 統合コードは実装済み: `public/data/shelter.geojson` があれば町公式データを優先表示 (`fetchOfficialShelters`)、なければ地理院skhbにフォールバック。`emergency_route.geojson`/`border.geojson` も配置すればレイヤとして有効化される (`src/citydata.js`)
+  - **正データはユーザーがGitHubにpushする** → 届いたら `public/data/` に展開して再ビルド・コミット
+
 ## 残タスク / ユーザー側での確認事項
 
 - [ ] 実ブラウザでの動作確認 (`npm install && npm run dev`)。サンドボックスでは外部タイルへの接続不可のため、データカタログAPI・地理院タイル・skhbタイルの実レスポンスは未検証。問題があれば画面の「データ読み込み状況」のエラーメッセージを参照。
