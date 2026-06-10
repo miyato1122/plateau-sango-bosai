@@ -224,12 +224,14 @@ const inCity = (lon, lat) =>
   lon >= CITY_BBOX.west && lon <= CITY_BBOX.east &&
   lat >= CITY_BBOX.south && lat <= CITY_BBOX.north;
 
+const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
+
 async function runDiagnosis(lon, lat, placeName) {
   showMarker(lon, lat);
   $('resultTitle').textContent = placeName ?? 'この地点のリスク';
   $('resultBody').innerHTML = '<div class="loading-dots">診断中…</div>';
   resultCard.hidden = false;
-  panel.hidden = true;
+  if (isMobile()) panel.hidden = true; // モバイルでは結果カードと重なるため閉じる
 
   try {
     const risk = await diagnosePoint(lon, lat);
