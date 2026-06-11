@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import { CITY_BBOX } from './config.js';
+import { CITY_BBOX, GSI_DEM, GEOID_OFFSET } from './config.js';
 import { HAZARD_LAYERS } from './hazards.js';
 import {
   tileCoords, tileToLonLat, metersPerPixel, floodClassIndex,
@@ -12,11 +12,7 @@ import {
 // を作る。標高は地理院DEMタイル (PNG標高) をデコードして付与する。
 const FLOOD_Z = 15; // 3.9m/px
 const BLOCK = 16;   // 16px = 約63m格子
-const DEM_URL = 'https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png';
 const DEM_Z = 14;
-// 地理院DEMは標高 (ジオイド基準)、Cesium/PLATEAUは楕円体高。
-// 奈良盆地周辺のジオイド高 (ジオイド2011) ≈ +37.2m を加えて変換する。
-const GEOID_OFFSET = 37.2;
 
 function loadTileData(urlTemplate, z, x, y) {
   return new Promise((resolve) => {
@@ -48,7 +44,7 @@ async function buildElevationSampler(bbox) {
   for (let x = x0; x <= x1; x++) {
     for (let y = y0; y <= y1; y++) {
       jobs.push(
-        loadTileData(DEM_URL, DEM_Z, x, y).then((d) => tiles.set(`${x}/${y}`, d))
+        loadTileData(GSI_DEM, DEM_Z, x, y).then((d) => tiles.set(`${x}/${y}`, d))
       );
     }
   }

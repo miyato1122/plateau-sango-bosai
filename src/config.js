@@ -28,7 +28,7 @@ export const PLATEAU_DATASETS_API =
 // PLATEAU-Terrain (Cesium Ion でホストされている地形アセット)。
 // Ionトークンは公開アプリごとに自分のアカウントのものを使う必要があるため、
 // ビルド時の環境変数 VITE_CESIUM_ION_TOKEN から注入する (.env.example 参照)。
-// 未設定の場合は地形を読み込まず、平坦 (楕円体) 表示にフォールバックする。
+// 未設定の場合は地理院標高タイル (GSI_DEM) による地形にフォールバックする。
 export const PLATEAU_TERRAIN_ION_ASSET = 2488101;
 export const PLATEAU_ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN ?? '';
 
@@ -36,3 +36,8 @@ export const PLATEAU_ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN ?? '';
 export const GSI_PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
 export const GSI_PHOTO =
   'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg';
+export const GSI_DEM = 'https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png';
+
+// 地理院DEMは標高 (ジオイド基準)、Cesium/PLATEAUは楕円体高。
+// 奈良盆地周辺のジオイド高 (ジオイド2011) ≈ +37.2m を加えて変換する。
+export const GEOID_OFFSET = 37.2;

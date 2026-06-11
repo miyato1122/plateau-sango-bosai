@@ -5,6 +5,7 @@ import {
   PLATEAU_TERRAIN_ION_ASSET, PLATEAU_ION_TOKEN,
 } from './config.js';
 import { loadBuildingTilesets } from './plateau.js';
+import { GsiTerrainProvider } from './gsiterrain.js';
 import { createHazardLayer, HAZARD_LAYERS, FLOOD_DEPTH_CLASSES } from './hazards.js';
 import { fetchShelters, addShelterEntities, nearestShelter } from './shelters.js';
 import { loadCityOverlay } from './citydata.js';
@@ -87,18 +88,23 @@ function flyHome(duration = 1.2) {
 flyHome(0);
 $('fabHome').addEventListener('click', () => flyHome());
 
-// ---- PLATEAU地形 (Ionトークン未設定時や失敗時は平坦のまま) ----
-if (!PLATEAU_ION_TOKEN) {
-  setStatus('terrain', '地形: Cesium Ionトークン未設定のため平坦表示', 'warn');
-} else {
-  setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み中…');
-  Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET)
-    .then((tp) => {
-      viewer.terrainProvider = tp;
+// ---- 3D地形 (Ionトークンがあれば PLATEAU-Terrain、無ければ地理院標高タイル) ----
+async function setupTerrain() {
+  if (PLATEAU_ION_TOKEN) {
+    try {
+      setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み中…');
+      viewer.terrainProvider =
+        await Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET);
       setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み完了', 'ok');
-    })
-    .catch(() => setStatus('terrain', '地形: 取得不可のため平坦表示', 'warn'));
+      return;
+    } catch {
+      /* 取得不可の場合は地理院標高タイルへフォールバック */
+    }
+  }
+  viewer.terrainProvider = new GsiTerrainProvider();
+  setStatus('terrain', '地形 (地理院標高タイル): 有効', 'ok');
 }
+setupTerrain();
 
 // ---- PLATEAU 3D建物 + 建物単位リスク分析 ----
 setStatus('bldg', '3D建物: データカタログ照会中…');
