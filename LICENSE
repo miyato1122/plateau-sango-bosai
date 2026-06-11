@@ -19,3 +19,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+The MIT license above applies to this repository's own source code.
+Map data and libraries displayed or used at runtime are subject to their
+respective providers' terms and licenses:
+
+- 3D City Model (Project PLATEAU) / MLIT, Japan — CC BY 4.0 and other open licenses
+- GSI Tiles, Overlay Hazard Map, designated emergency shelters, and the
+  place-name search API / Geospatial Information Authority of Japan (GSI)
+- CesiumJS / Cesium GS, Inc. — Apache License 2.0
+  (full text bundled at cesium/LICENSE.md in the build output)

@@ -45,7 +45,8 @@ function escapeHtml(text) {
 }
 
 // ---- Viewer初期化 ----
-Cesium.Ion.defaultAccessToken = PLATEAU_ION_TOKEN;
+// トークンがある場合のみ設定 (空のままだとCesium同梱の既定トークンに依存してしまう)
+if (PLATEAU_ION_TOKEN) Cesium.Ion.defaultAccessToken = PLATEAU_ION_TOKEN;
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
   baseLayer: new Cesium.ImageryLayer(
@@ -86,14 +87,18 @@ function flyHome(duration = 1.2) {
 flyHome(0);
 $('fabHome').addEventListener('click', () => flyHome());
 
-// ---- PLATEAU地形 (失敗時は平坦のまま) ----
-setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み中…');
-Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET)
-  .then((tp) => {
-    viewer.terrainProvider = tp;
-    setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み完了', 'ok');
-  })
-  .catch(() => setStatus('terrain', '地形: 取得不可のため平坦表示', 'warn'));
+// ---- PLATEAU地形 (Ionトークン未設定時や失敗時は平坦のまま) ----
+if (!PLATEAU_ION_TOKEN) {
+  setStatus('terrain', '地形: Cesium Ionトークン未設定のため平坦表示', 'warn');
+} else {
+  setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み中…');
+  Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET)
+    .then((tp) => {
+      viewer.terrainProvider = tp;
+      setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み完了', 'ok');
+    })
+    .catch(() => setStatus('terrain', '地形: 取得不可のため平坦表示', 'warn'));
+}
 
 // ---- PLATEAU 3D建物 + 建物単位リスク分析 ----
 setStatus('bldg', '3D建物: データカタログ照会中…');
