@@ -63,8 +63,14 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   sceneModePicker: false,
   navigationHelpButton: false,
   fullscreenButton: false,
+  infoBox: false,            // 生属性テーブルは出さず、独自カードで表示する
+  selectionIndicator: false,
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
+// 既定のダブルクリック(エンティティへズーム)も無効化
+viewer.screenSpaceEventHandler.removeInputAction(
+  Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK
+);
 
 function flyHome(duration = 1.2) {
   viewer.camera.flyTo({
@@ -287,7 +293,7 @@ const inCity = (lon, lat) =>
 
 const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
 
-async function runDiagnosis(lon, lat, placeName) {
+async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
   showMarker(lon, lat);
   $('resultTitle').textContent = placeName ?? 'この地点のリスク';
   $('resultBody').innerHTML = '<div class="loading-dots">診断中…</div>';
@@ -297,6 +303,7 @@ async function runDiagnosis(lon, lat, placeName) {
   try {
     const risk = await diagnosePoint(lon, lat);
     const rows = [];
+    if (extraRowHtml) rows.push(extraRowHtml);
 
     if (risk.flood) {
       rows.push(`
@@ -356,22 +363,68 @@ async function runDiagnosis(lon, lat, placeName) {
   }
 }
 
-// 地図タップで診断 (避難所アイコンのタップ時は通常の情報表示を優先)
+// 避難所カード (InfoBoxの代わり)
+function showShelterCard(s) {
+  $('resultTitle').textContent = '避難場所の情報';
+  $('resultBody').innerHTML = `
+    <div class="shelter-row">🏫 <b>${escapeHtml(s.name)}</b>
+      <div class="meta">${escapeHtml(s.address)}${s.kind ? `・${escapeHtml(s.kind)}` : ''}${s.capacity ? `・収容${s.capacity}人` : ''}</div>
+      <div class="meta">対応災害: ${escapeHtml(s.disasters.join('、')) || '指定なし'}</div>
+      <a class="route-link" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}&travelmode=walking">経路を見る</a>
+    </div>
+    <p class="result-note">出典: ${s.official ? 'PLATEAU 三郷町関連データセット' : '国土地理院 指定緊急避難場所データ'}</p>`;
+  resultCard.hidden = false;
+  if (isMobile()) panel.hidden = true;
+}
+
+// 建物クリック時の追加情報行
+function buildingInfoRow(info) {
+  const parts = [];
+  if (info.usage) parts.push(escapeHtml(info.usage));
+  if (info.height) parts.push(`高さ${info.height.toFixed(1)}m`);
+  if (info.storeys) parts.push(`約${info.storeys}階建て`);
+  if (parts.length === 0 && info.classIdx < 0) return '';
+  const rank = info.classIdx >= 0
+    ? `<div class="meta">この建物の浸水ランク (PLATEAU属性):
+        <span class="depth-chip" style="background:${FLOOD_DEPTH_CLASSES[info.classIdx].css}">${FLOOD_DEPTH_CLASSES[info.classIdx].label}</span>
+        ${info.classIdx >= 2 && info.storeys != null && info.storeys <= 2
+          ? '<b class="dash-danger"> — 2階建て以下のため屋内の垂直避難は困難です</b>' : ''}</div>`
+    : '';
+  return `<div class="risk-row"><span class="icon">🏠</span>
+    <div>${parts.join('・') || '建物'}${rank}</div></div>`;
+}
+
+// 地図タップで診断。建物タップはその建物の診断、避難所タップは施設カード。
 const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
 handler.setInputAction((movement) => {
   const picked = viewer.scene.pick(movement.position);
+
+  // 避難所などのエンティティ → 専用カード
   if (Cesium.defined(picked) && picked.id instanceof Cesium.Entity && picked.id !== marker) {
-    return; // 既存エンティティの選択を優先
+    if (picked.id.sangoShelter) showShelterCard(picked.id.sangoShelter);
+    return;
   }
+
   const cartesian =
     viewer.scene.pickPosition(movement.position) ??
     viewer.camera.pickEllipsoid(movement.position, viewer.scene.globe.ellipsoid);
   if (!cartesian) return;
   const carto = Cesium.Cartographic.fromCartesian(cartesian);
-  runDiagnosis(
-    Cesium.Math.toDegrees(carto.longitude),
-    Cesium.Math.toDegrees(carto.latitude)
-  );
+  let lon = Cesium.Math.toDegrees(carto.longitude);
+  let lat = Cesium.Math.toDegrees(carto.latitude);
+
+  // 建物 (3D Tiles) タップ → 建物の代表点で診断し、建物情報を添える
+  if (picked instanceof Cesium.Cesium3DTileFeature) {
+    const info = riskAnalyzer.describe(picked);
+    if (Number.isFinite(info.lon) && Number.isFinite(info.lat)) {
+      lon = info.lon;
+      lat = info.lat;
+    }
+    runDiagnosis(lon, lat, 'この建物のリスク', buildingInfoRow(info));
+    return;
+  }
+  runDiagnosis(lon, lat);
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 // ---- 現在地診断 ----

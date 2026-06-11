@@ -72,6 +72,23 @@ test('parseOfficialShelters: 同梱の三郷町公式データを検証', () => 
   }
 });
 
+test('同梱の緊急輸送道路・町域界GeoJSONの妥当性', () => {
+  for (const [file, expectType] of [
+    ['emergency_route.geojson', 'LineString'],
+    ['border.geojson', 'LineString'],
+  ]) {
+    const geojson = JSON.parse(readFileSync(new URL(`../public/data/${file}`, import.meta.url)));
+    assert.ok(geojson.features.length > 0, `${file}: featuresが空`);
+    for (const f of geojson.features) {
+      assert.equal(f.geometry.type, expectType, `${file}: 予期しないジオメトリ`);
+      for (const [lon, lat] of f.geometry.coordinates) {
+        assert.ok(lon > 135.6 && lon < 135.8 && lat > 34.5 && lat < 34.7,
+          `${file}: 町域から離れた座標 (${lon}, ${lat})`);
+      }
+    }
+  }
+});
+
 test('nearestShelter: 距離順と災害種別フィルタ', () => {
   const shelters = [
     { name: '近いが洪水非対応', lon: 135.700, lat: 34.600, disasters: ['地震'] },

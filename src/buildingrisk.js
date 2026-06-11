@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
 import {
-  detectRiskProperties, parseFloodRank, estimateStoreys,
+  detectRiskProperties, parseFloodRank, estimateStoreys, deepFindFloodRank,
   createBuildingStats, accumulateBuilding, FLOOD_DEPTH_CLASSES,
 } from './lib/geomath.js';
 
@@ -16,6 +16,7 @@ export class BuildingRiskAnalyzer {
   constructor() {
     this.stats = createBuildingStats();
     this.props = null;          // 検出した属性名 {rank, storeys, height}
+    this.rankSource = null;     // 'property' | 'attributes-json' | null
     this.coloring = false;
     this.seen = new Set();      // gml_idで重複集計を防ぐ
     this.listeners = new Set(); // 統計更新の通知先
@@ -33,6 +34,37 @@ export class BuildingRiskAnalyzer {
 
   onUpdate(fn) { this.listeners.add(fn); }
 
+  // 単一featureの浸水ランク添字。属性プロパティ → attributes JSON の順で探す。
+  classIndexOf(feature) {
+    if (this.props?.rank) {
+      const idx = parseFloodRank(feature.getProperty(this.props.rank));
+      if (idx >= 0) return idx;
+    }
+    if (this.rankSource !== 'property') {
+      return deepFindFloodRank(feature.getProperty('attributes'));
+    }
+    return -1;
+  }
+
+  // 建物クリック時の表示用情報
+  describe(feature) {
+    const storeys = estimateStoreys(
+      this.props?.storeys ? feature.getProperty(this.props.storeys) : null,
+      this.props?.height ? feature.getProperty(this.props.height) : null
+    );
+    const height = Number(
+      this.props?.height ? feature.getProperty(this.props.height) : NaN
+    );
+    return {
+      usage: feature.getProperty('bldg:usage') ?? feature.getProperty('用途') ?? null,
+      height: Number.isFinite(height) ? height : null,
+      storeys,
+      classIdx: this.classIndexOf(feature),
+      lon: Number(feature.getProperty('_x')),
+      lat: Number(feature.getProperty('_y')),
+    };
+  }
+
   #processContent(content) {
     if (!content?.featuresLength) return;
     let changed = false;
@@ -40,12 +72,17 @@ export class BuildingRiskAnalyzer {
       const feature = content.getFeature(i);
       if (this.props === null) {
         this.props = detectRiskProperties(feature.getPropertyIds());
+        if (this.props.rank) this.rankSource = 'property';
+      }
+      // 属性プロパティに無い場合はattributes JSONを一度だけ調べる
+      if (this.rankSource === null) {
+        if (deepFindFloodRank(feature.getProperty('attributes')) >= 0) {
+          this.rankSource = 'attributes-json';
+        }
       }
       const id =
         feature.getProperty('gml_id') ?? feature.getProperty('gml:id') ?? null;
-      const classIdx = this.props.rank
-        ? parseFloodRank(feature.getProperty(this.props.rank))
-        : -1;
+      const classIdx = this.classIndexOf(feature);
 
       if (id === null || !this.seen.has(id)) {
         if (id !== null) this.seen.add(id);
@@ -85,16 +122,13 @@ export class BuildingRiskAnalyzer {
     if (tile.content?.featuresLength) {
       for (let i = 0; i < tile.content.featuresLength; i++) {
         const feature = tile.content.getFeature(i);
-        const classIdx = this.props?.rank
-          ? parseFloodRank(feature.getProperty(this.props.rank))
-          : -1;
-        this.#applyColor(feature, classIdx);
+        this.#applyColor(feature, this.classIndexOf(feature));
       }
     }
     for (const child of tile.children ?? []) this.#walkTiles(child);
   }
 
-  hasRiskAttributes() { return !!this.props?.rank; }
+  hasRiskAttributes() { return this.rankSource !== null; }
 }
 
 export { RISK_COLORS, FLOOD_DEPTH_CLASSES };
