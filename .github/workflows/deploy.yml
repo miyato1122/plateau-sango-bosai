@@ -25,6 +25,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Cesium Ion トークン (リポジトリの Actions secret に登録)。
+          # 未登録でもビルドは成功し、その場合は地形が平坦表示になります。
+          VITE_CESIUM_ION_TOKEN: ${{ secrets.VITE_CESIUM_ION_TOKEN }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

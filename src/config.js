@@ -25,11 +25,12 @@ export const HOME_VIEW = {
 export const PLATEAU_DATASETS_API =
   'https://api.plateauview.mlit.go.jp/datacatalog/plateau-datasets';
 
-// PLATEAU-Terrain (公式チュートリアル掲載の公開Ionアセット/トークン)
-// 利用できない場合は楕円体地形に自動フォールバックする
+// PLATEAU-Terrain (Cesium Ion でホストされている地形アセット)。
+// Ionトークンは公開アプリごとに自分のアカウントのものを使う必要があるため、
+// ビルド時の環境変数 VITE_CESIUM_ION_TOKEN から注入する (.env.example 参照)。
+// 未設定の場合は地形を読み込まず、平坦 (楕円体) 表示にフォールバックする。
 export const PLATEAU_TERRAIN_ION_ASSET = 2488101;
-export const PLATEAU_ION_TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlNjk0MTM4NC1lMWI0LTQxNTgtYjcxZS01ZWJhMGJlMTE1MWQiLCJpZCI6MTQ5ODk3LCJpYXQiOjE3MTUxNTEyODZ9.2aUmEQ2-fDsjf-XeC6-hZpwkgwLse3yXoXF4xTOvPAY';
+export const PLATEAU_ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN ?? '';
 
 // 地理院タイル
 export const GSI_PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
