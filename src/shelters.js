@@ -122,23 +122,11 @@ export function addShelterEntities(viewer, shelters) {
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 6000),
       },
-      description: `
-        <h3>${escapeHtml(s.name)}</h3>
-        <p>${escapeHtml(s.address)}</p>
-        ${s.kind ? `<p><b>施設の種類:</b> ${escapeHtml(s.kind)}</p>` : ''}
-        ${s.capacity ? `<p><b>収容人数:</b> ${s.capacity}人</p>` : ''}
-        <p><b>対応災害種別:</b> ${escapeHtml(s.disasters.join('、')) || '指定なし'}</p>
-        <p>出典: ${s.official ? 'PLATEAU 三郷町関連データセット' : '国土地理院 指定緊急避難場所データ'}</p>`,
     });
+    entity.sangoShelter = s; // クリック時に独自カードで表示するための元データ
     entities.push(entity);
   }
   return entities;
-}
-
-function escapeHtml(text) {
-  return String(text ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[c]);
 }
 
 // 緑のピン型アイコンをSVGで生成 (外部画像に依存しない)

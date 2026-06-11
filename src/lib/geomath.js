@@ -192,6 +192,48 @@ export function estimateStoreys(storeysValue, heightValue) {
   return null;
 }
 
+// ネストしたオブジェクト (またはJSON文字列) から浸水ランク値を探す。
+// PLATEAUの3D Tilesでは拡張属性が `attributes` プロパティにJSONとして
+// 格納されることがあるため、キーを再帰探索して最良候補を返す。
+// 洪水を示す語はパス全体 (例: RiverFloodingRiskAttribute)、
+// ランクを示す語は末端キー (例: uro:rank) に現れるため別々に判定する。
+export function deepFindFloodRank(value) {
+  let obj = value;
+  if (typeof obj === 'string') {
+    try { obj = JSON.parse(obj); } catch { return -1; }
+  }
+  if (obj == null || typeof obj !== 'object') return -1;
+  const hits = [];
+  const walk = (node, path) => {
+    if (node == null || typeof node !== 'object') return;
+    for (const [k, v] of Object.entries(node)) {
+      const fullPath = `${path}/${k}`;
+      if (
+        (typeof v === 'number' || typeof v === 'string') &&
+        /(ランク|rank)/i.test(k) &&
+        /(浸水|洪水|flood)/i.test(fullPath)
+      ) {
+        hits.push({ path: fullPath, value: v });
+      } else if (typeof v === 'object') {
+        walk(v, fullPath);
+      }
+    }
+  };
+  walk(obj, '');
+  if (hits.length === 0) return -1;
+  // 想定最大規模 (L2) のキーパスを優先
+  hits.sort((a, b) => {
+    const score = (h) => (/想定最大|L2/i.test(h.path) ? 0 : /計画規模|L1/i.test(h.path) ? 2 : 1);
+    return score(a) - score(b);
+  });
+  for (const h of hits) {
+    const idx = parseFloodRank(h.value);
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+
+
 // 建物リスク統計のアキュムレータ
 export function createBuildingStats() {
   return {
