@@ -83,5 +83,5 @@ GitHub Pages では、リポジトリの Settings → Secrets and variables → 
 ### 公開時に行うこと (運営者向け)
 
 - [ ] Cesium Ion トークンを自分のアカウントのものに設定 (上記)
-- [ ] 国土地理院の[地理院タイルを用いた開発の報告フォーム](https://www.gsi.go.jp/development/development.html)に事後報告 (利用規約第6条への協力)
+- [ ] 国土地理院への開発報告: [地理院タイルについて](https://maps.gsi.go.jp/development/siyou.html) のページ内・利用規約の節にある「地理院タイルを用いた開発の報告フォーム」から事後報告 (協力依頼であり義務ではない)。報告内容はサイト名・URL・使用タイル (淡色地図 pale / 空中写真 seamlessphoto / 標高 dem_png / 指定緊急避難場所 skhb) 程度
 - [ ] 公開URL・運営者名を明記 (必要に応じてプライバシーポリシー等)
