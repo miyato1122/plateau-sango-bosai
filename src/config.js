@@ -26,11 +26,19 @@ export const PLATEAU_DATASETS_API =
   'https://api.plateauview.mlit.go.jp/datacatalog/plateau-datasets';
 
 // PLATEAU-Terrain (Cesium Ion でホストされている地形アセット)。
-// Ionトークンは公開アプリごとに自分のアカウントのものを使う必要があるため、
-// ビルド時の環境変数 VITE_CESIUM_ION_TOKEN から注入する (.env.example 参照)。
-// 未設定の場合は地理院標高タイル (GSI_DEM) による地形にフォールバックする。
-export const PLATEAU_TERRAIN_ION_ASSET = 2488101;
-export const PLATEAU_ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN ?? '';
+// PLATEAUが配信しているアセットID・公開アクセストークンを既定値として利用する
+// (出典: plateau-streaming-tutorial / terrain/plateau-terrain-streaming.md)。
+// このトークンを使う場合はデータの帰属に PLATEAU_TERRAIN_CREDIT を記載すること。
+// 独自のIonアカウントを使いたい場合は環境変数 VITE_CESIUM_ION_TOKEN で上書きできる。
+export const PLATEAU_TERRAIN_ION_ASSET = 3258112;
+export const PLATEAU_TERRAIN_DEFAULT_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiODVhMmQ5OS1hOWZjLTQ3YmYtODlmNi1lNWUwY2MwOGUxYTMiLCJpZCI6MTQ5ODk3LCJpYXQiOjE2ODc5MzQ3NDN9.OG0mc3i7ZxGwHQjlMv3TRjiOvKWpzxglxmJRaUIykTY';
+export const PLATEAU_ION_TOKEN =
+  import.meta.env.VITE_CESIUM_ION_TOKEN || PLATEAU_TERRAIN_DEFAULT_TOKEN;
+
+// PLATEAU-Terrain (配信された地形データ) 利用時に必須の帰属表記。
+export const PLATEAU_TERRAIN_CREDIT =
+  '地形データは、測量法に基づく国土地理院長承認（使用）R3JHs 778を得て使用';
 
 // 地理院タイル
 export const GSI_PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';

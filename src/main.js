@@ -2,7 +2,7 @@ import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import {
   HOME_VIEW, CITY_BBOX, GSI_PALE, GSI_PHOTO,
-  PLATEAU_TERRAIN_ION_ASSET, PLATEAU_ION_TOKEN,
+  PLATEAU_TERRAIN_ION_ASSET, PLATEAU_ION_TOKEN, PLATEAU_TERRAIN_CREDIT,
 } from './config.js';
 import { loadBuildingTilesets } from './plateau.js';
 import { GsiTerrainProvider } from './gsiterrain.js';
@@ -88,13 +88,15 @@ function flyHome(duration = 1.2) {
 flyHome(0);
 $('fabHome').addEventListener('click', () => flyHome());
 
-// ---- 3D地形 (Ionトークンがあれば PLATEAU-Terrain、無ければ地理院標高タイル) ----
+// ---- 3D地形 (既定で PLATEAU-Terrain、取得不可時は地理院標高タイルへフォールバック) ----
 async function setupTerrain() {
   if (PLATEAU_ION_TOKEN) {
     try {
       setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み中…');
       viewer.terrainProvider =
         await Cesium.CesiumTerrainProvider.fromIonAssetId(PLATEAU_TERRAIN_ION_ASSET);
+      // 配信された地形データ利用時に必須の帰属表記をクレジット表示に追加
+      viewer.creditDisplay.addStaticCredit(new Cesium.Credit(PLATEAU_TERRAIN_CREDIT));
       setStatus('terrain', '地形 (PLATEAU-Terrain): 読み込み完了', 'ok');
       return;
     } catch {
