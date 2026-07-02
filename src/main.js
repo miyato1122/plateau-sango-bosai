@@ -403,22 +403,40 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
           <div>${t('diag.floodSafe')}</div></div>`);
     }
 
+    // 浸水継続時間の想定区域 (長期間水が引かないおそれ)
+    if (risk.keizoku && risk.flood) {
+      rows.push(`
+        <div class="risk-row bad"><span class="icon">⏳</span>
+          <div>${t('diag.keizoku')}</div></div>`);
+    }
+
+    // 土砂災害: 特別警戒区域 (レッドゾーン) と警戒区域を分けて表示
     const ls = risk.landslide;
-    const lsTypes = [
-      ls.dosekiryu && t('ls.dosekiryu'),
-      ls.kyukeisha && t('ls.kyukeisha'),
-      ls.jisuberi && t('ls.jisuberi'),
+    const typesOf = (zone) => [
+      ls.dosekiryu === zone && t('ls.dosekiryu'),
+      ls.kyukeisha === zone && t('ls.kyukeisha'),
+      ls.jisuberi === zone && t('ls.jisuberi'),
     ].filter(Boolean);
-    if (lsTypes.length) {
+    const specialTypes = typesOf('special');
+    const warningTypes = typesOf('warning');
+    if (specialTypes.length) {
       rows.push(`
         <div class="risk-row bad"><span class="icon">⛰️</span>
-          <div>${t('diag.landslide', { types: lsTypes.map(escapeHtml).join(listSep()) })}
+          <div>${t('diag.landslideSpecial', { types: specialTypes.map(escapeHtml).join(listSep()) })}
+            <span class="advice">${t('diag.landslideSpecialAdvice')}</span></div></div>`);
+    }
+    if (warningTypes.length) {
+      rows.push(`
+        <div class="risk-row bad"><span class="icon">⛰️</span>
+          <div>${t('diag.landslide', { types: warningTypes.map(escapeHtml).join(listSep()) })}
             <span class="advice">${t('diag.landslideAdvice')}</span></div></div>`);
-    } else {
+    }
+    if (!specialTypes.length && !warningTypes.length) {
       rows.push(`
         <div class="risk-row ok"><span class="icon">⛰️</span>
           <div>${t('diag.landslideSafe')}</div></div>`);
     }
+    const lsTypes = [...specialTypes, ...warningTypes];
 
     // 避難所の対応災害フィルタは日本語の公式データ値と照合する
     const filter = risk.flood ? '洪水' : lsTypes.length ? '土砂' : null;
