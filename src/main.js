@@ -10,7 +10,8 @@ import { createHazardLayer, HAZARD_LAYERS, FLOOD_DEPTH_CLASSES } from './hazards
 import { fetchShelters, addShelterEntities, nearestShelter } from './shelters.js';
 import { loadCityOverlay } from './citydata.js';
 import { diagnosePoint } from './risk.js';
-import { compassDirection } from './lib/geomath.js';
+import { compassIndex } from './lib/geomath.js';
+import { t, setLang, currentLang, applyStatic, LANGS } from './i18n.js';
 import { BuildingRiskAnalyzer } from './buildingrisk.js';
 import { buildWaterColumns } from './floodgrid.js';
 import { initDashboard } from './dashboard.js';
@@ -48,6 +49,18 @@ function escapeHtml(text) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[c]);
 }
+
+// ---- 言語 (標準日本語 / やさしい日本語 / English) ----
+const langSelect = $('langSelect');
+for (const { code, label } of LANGS) {
+  const opt = document.createElement('option');
+  opt.value = code;
+  opt.textContent = label;
+  langSelect.appendChild(opt);
+}
+langSelect.value = currentLang();
+langSelect.addEventListener('change', () => setLang(langSelect.value));
+applyStatic();
 
 // ---- Viewer初期化 ----
 // トークンがある場合のみ設定 (空のままだとCesium同梱の既定トークンに依存してしまう)
@@ -144,7 +157,9 @@ for (const [key, def] of Object.entries(HAZARD_LAYERS)) {
   chip.className = 'chip';
   chip.style.setProperty('--dot', def.color);
   chip.setAttribute('aria-pressed', 'false');
-  chip.innerHTML = `<span class="dot"></span>${def.label}`;
+  chip.innerHTML = '<span class="dot"></span><span class="chip-label"></span>';
+  chip.querySelector('.chip-label').textContent = t(`hazards.${key}`);
+  chip.dataset.hazard = key;
   chip.addEventListener('click', () => {
     const on = chip.getAttribute('aria-pressed') !== 'true';
     chip.setAttribute('aria-pressed', String(on));
@@ -158,12 +173,25 @@ opacityInput.addEventListener('input', () => {
   for (const layer of Object.values(hazardLayers)) layer.alpha = alpha;
 });
 
-// 凡例
-for (const cls of FLOOD_DEPTH_CLASSES) {
-  const li = document.createElement('li');
-  li.innerHTML = `<span class="swatch" style="background:${cls.css}"></span>${cls.label}`;
-  $('floodLegend').appendChild(li);
+// 凡例 (言語切替時に再描画)
+function renderLegend() {
+  const box = $('floodLegend');
+  box.innerHTML = '';
+  const classes = t('floodClasses');
+  for (const [i, cls] of FLOOD_DEPTH_CLASSES.entries()) {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="swatch" style="background:${cls.css}"></span>`;
+    li.append(classes[i].label);
+    box.appendChild(li);
+  }
 }
+renderLegend();
+document.addEventListener('sango:langchange', () => {
+  renderLegend();
+  for (const chip of chipsBox.querySelectorAll('.chip')) {
+    chip.querySelector('.chip-label').textContent = t(`hazards.${chip.dataset.hazard}`);
+  }
+});
 
 // ---- 航空写真 ----
 let photoLayer = null;
@@ -226,7 +254,7 @@ $('layer-bldgrisk').addEventListener('change', (e) => {
     if (riskAnalyzer.stats.total > 0) {
       // 属性が無い場合はチェックを戻す
       e.target.checked = false;
-      toast('この3D都市モデルには建物単位の浸水ランク属性が含まれていません');
+      toast(t('bldg.noAttr'));
       return;
     }
   } else {
@@ -336,10 +364,22 @@ const inCity = (lon, lat) =>
 
 const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
 
+// 浸水深クラスの現在言語での表記 (凡例色は公式色を維持)
+function floodClassText(flood) {
+  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood);
+  if (idx >= 0) {
+    const cls = t('floodClasses')[idx];
+    return { label: cls.label, advice: cls.advice, css: flood.css };
+  }
+  return { label: t('flood.unknown'), advice: t('flood.unknownAdvice'), css: flood.css };
+}
+
+const listSep = () => (currentLang() === 'en' ? ', ' : '・');
+
 async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
   showMarker(lon, lat);
-  $('resultTitle').textContent = placeName ?? 'この地点のリスク';
-  $('resultBody').innerHTML = '<div class="loading-dots">診断中…</div>';
+  $('resultTitle').textContent = placeName ?? t('diag.title');
+  $('resultBody').innerHTML = `<div class="loading-dots">${t('diag.loading')}</div>`;
   resultCard.hidden = false;
   if (isMobile()) panel.hidden = true; // モバイルでは結果カードと重なるため閉じる
 
@@ -349,74 +389,77 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
     if (extraRowHtml) rows.push(extraRowHtml);
 
     if (risk.flood) {
+      const cls = floodClassText(risk.flood);
+      const chip = `<span class="depth-chip" style="background:${cls.css}">${escapeHtml(cls.label)}</span>`;
       rows.push(`
         <div class="risk-row bad">
           <span class="icon">🌊</span>
-          <div>洪水で <span class="depth-chip" style="background:${risk.flood.css}">${risk.flood.label}</span> の浸水が想定されています
-            <span class="advice">${risk.flood.advice ?? ''}</span></div>
+          <div>${t('diag.flood', { chip })}
+            <span class="advice">${escapeHtml(cls.advice ?? '')}</span></div>
         </div>`);
     } else {
       rows.push(`
         <div class="risk-row ok"><span class="icon">🌊</span>
-          <div>洪水の浸水想定区域<b>外</b>です</div></div>`);
+          <div>${t('diag.floodSafe')}</div></div>`);
     }
 
     const ls = risk.landslide;
     const lsTypes = [
-      ls.dosekiryu && '土石流',
-      ls.kyukeisha && '急傾斜地の崩壊',
-      ls.jisuberi && '地すべり',
+      ls.dosekiryu && t('ls.dosekiryu'),
+      ls.kyukeisha && t('ls.kyukeisha'),
+      ls.jisuberi && t('ls.jisuberi'),
     ].filter(Boolean);
     if (lsTypes.length) {
       rows.push(`
         <div class="risk-row bad"><span class="icon">⛰️</span>
-          <div>土砂災害警戒区域 (<b>${lsTypes.join('・')}</b>) に該当する可能性があります
-            <span class="advice">大雨のときは早めに区域の外へ避難してください</span></div></div>`);
+          <div>${t('diag.landslide', { types: lsTypes.map(escapeHtml).join(listSep()) })}
+            <span class="advice">${t('diag.landslideAdvice')}</span></div></div>`);
     } else {
       rows.push(`
         <div class="risk-row ok"><span class="icon">⛰️</span>
-          <div>土砂災害警戒区域<b>外</b>です</div></div>`);
+          <div>${t('diag.landslideSafe')}</div></div>`);
     }
 
+    // 避難所の対応災害フィルタは日本語の公式データ値と照合する
     const filter = risk.flood ? '洪水' : lsTypes.length ? '土砂' : null;
     const nearest = shelters.length ? nearestShelter(shelters, lon, lat, filter) : null;
     if (nearest) {
       const { shelter: s, dist } = nearest;
       const minutes = Math.max(1, Math.ceil(dist / 80)); // 徒歩80m/分
-      const dir = compassDirection(lon, lat, s.lon, s.lat);
+      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)];
+      const meta = t('shelter.meta', { dir, dist: Math.round(dist), min: minutes });
       rows.push(`
-        <div class="shelter-row">🏃 最寄りの避難場所
+        <div class="shelter-row">${t('shelter.nearest')}
           <div><b>${escapeHtml(s.name)}</b></div>
-          <div class="meta">${dir}へ約${Math.round(dist)}m・徒歩約${minutes}分${s.kind ? `・${escapeHtml(s.kind)}` : ''}</div>
+          <div class="meta">${escapeHtml(meta)}${s.kind ? `${listSep()}${escapeHtml(s.kind)}` : ''}</div>
           <a class="route-link" target="_blank" rel="noopener"
              href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${s.lat},${s.lon}&travelmode=walking">
-             経路を見る</a>
+             ${t('shelter.route')}</a>
         </div>`);
     }
 
     if (!inCity(lon, lat)) {
-      rows.push('<p class="result-note">⚠️ この地点は三郷町の外です。表示は全国データに基づく参考値です。</p>');
+      rows.push(`<p class="result-note">${t('note.outside')}</p>`);
     }
-    rows.push('<p class="result-note">出典: ハザードマップポータルサイト (想定最大規模)。参考情報であり、実際の災害はこれと異なる場合があります。</p>');
+    rows.push(`<p class="result-note">${t('note.source')}</p>`);
     $('resultBody').innerHTML = rows.join('');
   } catch (err) {
     console.error(err);
-    $('resultBody').innerHTML =
-      '<p class="result-note">診断に失敗しました。通信状況をご確認のうえ、もう一度お試しください。</p>';
+    $('resultBody').innerHTML = `<p class="result-note">${t('err.diag')}</p>`;
   }
 }
 
 // 避難所カード (InfoBoxの代わり)
 function showShelterCard(s) {
-  $('resultTitle').textContent = '避難場所の情報';
+  $('resultTitle').textContent = t('shelter.info');
   $('resultBody').innerHTML = `
     <div class="shelter-row">🏫 <b>${escapeHtml(s.name)}</b>
-      <div class="meta">${escapeHtml(s.address)}${s.kind ? `・${escapeHtml(s.kind)}` : ''}${s.capacity ? `・収容${s.capacity}人` : ''}</div>
-      <div class="meta">対応災害: ${escapeHtml(s.disasters.join('、')) || '指定なし'}</div>
+      <div class="meta">${escapeHtml(s.address)}${s.kind ? `${listSep()}${escapeHtml(s.kind)}` : ''}${s.capacity ? `${listSep()}${escapeHtml(t('shelter.capacity', { n: s.capacity }))}` : ''}</div>
+      <div class="meta">${escapeHtml(t('shelter.disasters', { list: s.disasters.join('、') || t('shelter.noDisasters') }))}</div>
       <a class="route-link" target="_blank" rel="noopener"
-         href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}&travelmode=walking">経路を見る</a>
+         href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}&travelmode=walking">${t('shelter.route')}</a>
     </div>
-    <p class="result-note">出典: ${s.official ? 'PLATEAU 三郷町関連データセット' : '国土地理院 指定緊急避難場所データ'}</p>`;
+    <p class="result-note">${s.official ? t('shelter.srcOfficial') : t('shelter.srcGsi')}</p>`;
   resultCard.hidden = false;
   if (isMobile()) panel.hidden = true;
 }
@@ -425,17 +468,17 @@ function showShelterCard(s) {
 function buildingInfoRow(info) {
   const parts = [];
   if (info.usage) parts.push(escapeHtml(info.usage));
-  if (info.height) parts.push(`高さ${info.height.toFixed(1)}m`);
-  if (info.storeys) parts.push(`約${info.storeys}階建て`);
+  if (info.height) parts.push(escapeHtml(t('bldg.height', { h: info.height.toFixed(1) })));
+  if (info.storeys) parts.push(escapeHtml(t('bldg.storeys', { n: info.storeys })));
   if (parts.length === 0 && info.classIdx < 0) return '';
   const rank = info.classIdx >= 0
-    ? `<div class="meta">この建物の浸水ランク (PLATEAU属性):
-        <span class="depth-chip" style="background:${FLOOD_DEPTH_CLASSES[info.classIdx].css}">${FLOOD_DEPTH_CLASSES[info.classIdx].label}</span>
+    ? `<div class="meta">${t('bldg.rankLabel')}
+        <span class="depth-chip" style="background:${FLOOD_DEPTH_CLASSES[info.classIdx].css}">${escapeHtml(t('floodClasses')[info.classIdx].label)}</span>
         ${info.classIdx >= 2 && info.storeys != null && info.storeys <= 2
-          ? '<b class="dash-danger"> — 2階建て以下のため屋内の垂直避難は困難です</b>' : ''}</div>`
+          ? `<b class="dash-danger">${escapeHtml(t('bldg.vertWarn'))}</b>` : ''}</div>`
     : '';
   return `<div class="risk-row"><span class="icon">🏠</span>
-    <div>${parts.join('・') || '建物'}${rank}</div></div>`;
+    <div>${parts.join(listSep()) || t('bldg.fallback')}${rank}</div></div>`;
 }
 
 // 地図タップで診断。建物タップはその建物の診断、避難所タップは施設カード。
@@ -464,7 +507,7 @@ handler.setInputAction((movement) => {
       lon = info.lon;
       lat = info.lat;
     }
-    runDiagnosis(lon, lat, 'この建物のリスク', buildingInfoRow(info));
+    runDiagnosis(lon, lat, t('diag.building'), buildingInfoRow(info));
     return;
   }
   runDiagnosis(lon, lat);
@@ -473,10 +516,10 @@ handler.setInputAction((movement) => {
 // ---- 現在地診断 ----
 $('fabLocate').addEventListener('click', () => {
   if (!navigator.geolocation) {
-    toast('この端末では現在地を取得できません');
+    toast(t('geo.unsupported'));
     return;
   }
-  toast('現在地を取得しています…', 8000);
+  toast(t('geo.getting'), 8000);
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { longitude: lon, latitude: lat } = pos.coords;
@@ -485,9 +528,9 @@ $('fabLocate').addEventListener('click', () => {
         orientation: { heading: 0, pitch: Cesium.Math.toRadians(-40), roll: 0 },
         duration: 1.5,
       });
-      runDiagnosis(lon, lat, '現在地のリスク');
+      runDiagnosis(lon, lat, t('diag.current'));
     },
-    () => toast('現在地を取得できませんでした。位置情報の許可を確認してください。'),
+    () => toast(t('geo.failed')),
     { enableHighAccuracy: true, timeout: 10000 }
   );
 });
@@ -508,7 +551,7 @@ $('searchBar').addEventListener('submit', async (e) => {
     let results = await search(q.includes('三郷') ? q : `奈良県生駒郡三郷町${q}`);
     if (!results.length) results = await search(q);
     if (!results.length) {
-      toast(`「${q}」が見つかりませんでした`);
+      toast(t('err.notFound', { q }));
       return;
     }
     const hit = results[0];
@@ -522,7 +565,7 @@ $('searchBar').addEventListener('submit', async (e) => {
     $('searchInput').blur();
   } catch (err) {
     console.error(err);
-    toast('検索に失敗しました。通信状況をご確認ください。');
+    toast(t('err.search'));
   }
 });
 
@@ -532,36 +575,40 @@ registerServiceWorker();
 function renderOfflineNote() {
   const meta = offlineMeta();
   if (!meta) {
-    $('offline-note').textContent = 'まだ保存されていません';
+    $('offline-note').textContent = t('offline.none');
     return;
   }
-  const date = new Date(meta.savedAt);
+  const d = new Date(meta.savedAt);
+  const date = currentLang() === 'en'
+    ? `${d.getMonth() + 1}/${d.getDate()}`
+    : `${d.getMonth() + 1}月${d.getDate()}日`;
   $('offline-note').textContent =
-    `保存済み: ${date.getMonth() + 1}月${date.getDate()}日 (タイル${meta.ok + meta.notFound}件)`;
+    t('offline.saved', { date, count: meta.ok + meta.notFound });
 }
 
 const offlineSaveBtn = $('offlineSave');
 if (!offlineSupported()) {
   offlineSaveBtn.disabled = true;
-  $('offline-note').textContent = 'この端末・ブラウザでは利用できません';
+  $('offline-note').textContent = t('offline.unsupported');
 } else {
   renderOfflineNote();
+  document.addEventListener('sango:langchange', renderOfflineNote);
   offlineSaveBtn.addEventListener('click', async () => {
     if (!navigator.onLine) {
-      toast('オフラインのため保存できません。通信できる場所でお試しください。');
+      toast(t('offline.needOnline'));
       return;
     }
     offlineSaveBtn.disabled = true;
     try {
       await saveOfflineArea((done, total) => {
-        $('offline-note').textContent = `保存中… ${done}/${total}`;
+        $('offline-note').textContent = t('offline.saving', { done, total });
       });
       renderOfflineNote();
-      toast('町内のデータを保存しました。電波がない場所でも診断できます。');
+      toast(t('offline.done'));
     } catch (err) {
       console.error(err);
-      $('offline-note').textContent = '保存に失敗しました';
-      toast(err.message ?? 'オフラインデータの保存に失敗しました');
+      $('offline-note').textContent = t('offline.failed');
+      toast(err.message ?? t('offline.failed'));
     } finally {
       offlineSaveBtn.disabled = false;
     }
@@ -572,16 +619,14 @@ watchOnlineState((online) => {
   const badge = $('offlineBadge');
   badge.hidden = online;
   if (!online) {
-    badge.textContent = offlineMeta()
-      ? '📡 オフライン表示中 — 保存済みデータで診断できます'
-      : '📡 オフラインです — データ未保存のため表示が制限されます';
+    badge.textContent = offlineMeta() ? t('offline.badgeSaved') : t('offline.badgeNone');
   }
 });
 
 // ---- 初回ヒント ----
 if (!localStorage.getItem('sango-hint-shown')) {
   setTimeout(() => {
-    toast('地図をタップすると、その場所の災害リスクと最寄りの避難場所がわかります', 7000);
+    toast(t('hint.tap'), 7000);
     localStorage.setItem('sango-hint-shown', '1');
   }, 1500);
 }

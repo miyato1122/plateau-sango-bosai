@@ -1,6 +1,7 @@
 import { FLOOD_DEPTH_CLASSES } from './lib/geomath.js';
 import { RISK_COLORS } from './buildingrisk.js';
 import { scanFloodGrid } from './floodgrid.js';
+import { t } from './i18n.js';
 
 // 町全体統計ダッシュボード。
 //   - 浸水面積統計: ハザードタイル全域スキャン (町全体を常にカバー)
@@ -31,17 +32,16 @@ export function initDashboard(analyzer) {
   async function refresh() {
     renderBuildings(analyzer.stats, analyzer.hasRiskAttributes());
     if (!areaStats && !scanError) {
-      $('dashArea').innerHTML = '<div class="loading-dots">町全域のハザードタイルを解析中…</div>';
+      $('dashArea').innerHTML = `<div class="loading-dots">${t('dash.scanning')}</div>`;
       try {
         areaStats = await scanFloodGrid((done, total) => {
           $('dashArea').innerHTML =
-            `<div class="loading-dots">町全域のハザードタイルを解析中… ${done}/${total}</div>`;
+            `<div class="loading-dots">${t('dash.scanning')} ${done}/${total}</div>`;
         });
       } catch (err) {
         console.error(err);
         scanError = true;
-        $('dashArea').innerHTML =
-          '<p class="result-note">面積統計の取得に失敗しました。通信状況をご確認ください。</p>';
+        $('dashArea').innerHTML = `<p class="result-note">${t('dash.scanFailed')}</p>`;
         return;
       }
     }
@@ -50,35 +50,39 @@ export function initDashboard(analyzer) {
 
   function renderArea({ areaKm2, totalKm2 }) {
     const max = Math.max(...areaKm2);
+    const classes = t('floodClasses');
     $('dashArea').innerHTML = `
-      <p class="dash-headline">想定最大規模の洪水で、町内 <b>約${totalKm2.toFixed(2)} km²</b> が浸水するおそれがあります</p>
+      <p class="dash-headline">${t('dash.areaHead', { km2: totalKm2.toFixed(2) })}</p>
       ${FLOOD_DEPTH_CLASSES.map((cls, i) =>
-        bar(cls.label, areaKm2[i], max, cls.css, ' km²')).join('')}
-      <p class="result-note">出典: ハザードマップポータルサイト配信タイルの全域解析 (約63m格子)</p>`;
+        bar(classes[i].label, areaKm2[i], max, cls.css, t('dash.unitKm2'))).join('')}
+      <p class="result-note">${t('dash.areaNote')}</p>`;
   }
 
   function renderBuildings(stats, hasAttrs) {
     if (!hasAttrs || stats.total === 0) {
       $('dashBuildings').innerHTML = `
-        <p class="result-note">${stats.total === 0
-          ? '3D建物の読み込み待ちです。地図を表示したまましばらくお待ちください。'
-          : 'この3D都市モデルには建物単位の浸水ランク属性が含まれていないため、建物別統計は表示できません (面積統計をご利用ください)。'}</p>`;
+        <p class="result-note">${stats.total === 0 ? t('dash.bldgWait') : t('dash.bldgNoAttr')}</p>`;
       return;
     }
     const atRisk = stats.byClass.reduce((a, b) => a + b, 0);
     const max = Math.max(...stats.byClass);
+    const classes = t('floodClasses');
     $('dashBuildings').innerHTML = `
-      <p class="dash-headline">読み込み済み <b>${stats.total.toLocaleString()}棟</b> のうち
-        <b>${atRisk.toLocaleString()}棟</b> に浸水想定、うち
-        <b class="dash-danger">${stats.verticalEvacuationRisk.toLocaleString()}棟</b> は
-        3m以上の浸水想定かつ2階建て以下 (垂直避難が困難)</p>
+      <p class="dash-headline">${t('dash.bldgHead', {
+        total: stats.total.toLocaleString(),
+        atRisk: atRisk.toLocaleString(),
+        vert: stats.verticalEvacuationRisk.toLocaleString(),
+      })}</p>
       ${FLOOD_DEPTH_CLASSES.map((cls, i) =>
-        bar(cls.label, stats.byClass[i], max, RISK_COLORS[i], '棟')).join('')}
-      <p class="result-note">カメラで表示した範囲の建物から漸進的に集計されます。建物属性 (浸水ランク・階数) はPLATEAU CityGML由来です。</p>`;
+        bar(classes[i].label, stats.byClass[i], max, RISK_COLORS[i], t('dash.unitBldg'))).join('')}
+      <p class="result-note">${t('dash.bldgNote')}</p>`;
   }
 
-  // 統計が更新されたら開いているダッシュボードに反映
+  // 統計更新・言語切替を開いているダッシュボードに反映
   analyzer.onUpdate((stats) => {
     if (!card.hidden) renderBuildings(stats, analyzer.hasRiskAttributes());
+  });
+  document.addEventListener('sango:langchange', () => {
+    if (!card.hidden) refresh();
   });
 }

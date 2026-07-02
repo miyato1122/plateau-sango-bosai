@@ -52,8 +52,8 @@ export function distanceMeters(lon1, lat1, lon2, lat2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// 始点から見た方位 (8方位の日本語)
-export function compassDirection(lon1, lat1, lon2, lat2) {
+// 始点から見た方位 (8方位の添字 0=北, 1=北東, …, 7=北西)
+export function compassIndex(lon1, lat1, lon2, lat2) {
   const toRad = (d) => (d * Math.PI) / 180;
   const dLon = toRad(lon2 - lon1);
   const y = Math.sin(dLon) * Math.cos(toRad(lat2));
@@ -61,8 +61,13 @@ export function compassDirection(lon1, lat1, lon2, lat2) {
     Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
     Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
   const deg = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  return Math.round(deg / 45) % 8;
+}
+
+// 始点から見た方位 (8方位の日本語)
+export function compassDirection(lon1, lat1, lon2, lat2) {
   const dirs = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
-  return dirs[Math.round(deg / 45) % 8];
+  return dirs[compassIndex(lon1, lat1, lon2, lat2)];
 }
 
 // PLATEAU関連データセット「避難施設」GeoJSONのパース
