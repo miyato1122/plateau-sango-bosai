@@ -1,0 +1,50 @@
+# 外部配信サービスの疎通監視 (週次)。
+# 本アプリは実行時に公式配信 (PLATEAUデータカタログ・地理院タイル・
+# ハザードマップポータル) へ依存するため、提供停止・仕様変更を早期検知する。
+# 失敗するとワークフローが赤くなり通知される。
+name: External data sources monitor
+
+on:
+  schedule:
+    - cron: '0 21 * * 0' # 毎週月曜 6:00 JST
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PLATEAUデータカタログAPI (三郷町データの存在)
+        run: |
+          code=$(curl -sS -o /tmp/catalog.json -w '%{http_code}' --max-time 60 \
+            'https://api.plateauview.mlit.go.jp/datacatalog/plateau-datasets')
+          echo "HTTP $code"
+          test "$code" = "200"
+          grep -q '29343' /tmp/catalog.json || { echo '::error::カタログに三郷町(29343)が見つかりません'; exit 1; }
+
+      - name: 地理院タイル (淡色地図・標高)
+        run: |
+          for url in \
+            'https://cyberjapandata.gsi.go.jp/xyz/pale/10/897/407.png' \
+            'https://cyberjapandata.gsi.go.jp/xyz/dem_png/14/14367/6512.png'; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url")
+            echo "$code $url"
+            test "$code" = "200" || { echo "::error::地理院タイル取得失敗 ($code) $url"; exit 1; }
+          done
+
+      - name: ハザードマップポータル配信タイル (疎通)
+        run: |
+          # 404は「その地点に区域なし」の正常応答のため、200/404以外を失敗とする
+          for url in \
+            'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/15/28735/13024.png' \
+            'https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/15/28735/13024.png'; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url")
+            echo "$code $url"
+            case "$code" in 200|404) ;; *) echo "::error::ハザードタイル疎通失敗 ($code) $url"; exit 1;; esac
+          done
+
+      - name: 地理院ジオコーダ (住所検索)
+        run: |
+          code=$(curl -sS -o /tmp/geo.json -w '%{http_code}' --max-time 30 \
+            'https://msearch.gsi.go.jp/address-search/AddressSearch?q=%E4%B8%89%E9%83%B7%E7%94%BA')
+          echo "HTTP $code"
+          test "$code" = "200"

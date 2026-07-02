@@ -1,0 +1,33 @@
+# 単体テスト・ビルド・E2Eスモーク (外部APIは全てモック)
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: 単体テスト
+        run: npm test
+      - name: ビルド
+        run: npm run build
+      - name: Playwrightブラウザ取得
+        run: npx playwright install --with-deps chromium
+      - name: E2Eスモーク (外部APIモック)
+        run: npx playwright test
+      - name: E2E失敗時のトレースを保存
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
