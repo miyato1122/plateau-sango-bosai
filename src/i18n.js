@@ -162,6 +162,9 @@ const ja = {
   'route.risky': '⚠️ うち約{m}mは浸水・土砂の想定区域内を通ります。災害時は通行できないおそれがあります',
   'route.note': '青=想定区域外 / 赤点線=想定区域内。参考情報であり実際の通行可否は保証されません',
   'route.failed': 'この地点付近の道路データがないため計算できませんでした',
+
+  'weather.active': '三郷町に {list} が発表されています',
+  'weather.link': '気象庁の情報を見る',
 };
 
 const easy = {
@@ -289,6 +292,9 @@ const easy = {
   'route.risky': '⚠️ とちゅう の やく{m}m は あぶない ばしょ を とおります。き を つけて ください',
   'route.note': 'あお = あんぜんな みち / あかい てんせん = あぶない かもしれない みち',
   'route.failed': 'この ばしょ の みち の データ が ありません でした',
+
+  'weather.active': 'いま 三郷町(さんごうちょう) に {list} が でて います',
+  'weather.link': 'きしょうちょう の ページ を みる',
 };
 
 const en = {
@@ -437,6 +443,9 @@ const en = {
   'route.risky': '⚠️ About {m} m passes through expected flood/landslide zones and may be impassable during a disaster',
   'route.note': 'Blue = outside hazard zones / red dashes = inside. Reference only; passability is not guaranteed',
   'route.failed': 'No road network data near this point',
+
+  'weather.active': 'Now in effect for Sango Town: {list}',
+  'weather.link': 'See JMA for details',
 };
 
 // テストからも参照する (キー整合性の検証)
