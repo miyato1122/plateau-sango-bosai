@@ -46,12 +46,17 @@
 
 ```bash
 npm install
-npm run dev      # 開発サーバー
-npm test         # 単体テスト (タイル座標・色判定・距離計算・実データ検証など)
-npm run build    # dist/ に静的ビルド
+npm run dev       # 開発サーバー
+npm test          # 単体テスト (タイル座標・色判定・距離計算・辞書整合性・実データ検証など)
+npm run build     # dist/ に静的ビルド
+npm run test:e2e  # PlaywrightによるE2Eスモーク (外部APIは全てモック、要ブラウザ)
 ```
 
-mainブランチへのプッシュでGitHub Pagesへ自動デプロイするワークフローを同梱 (`.github/workflows/deploy.yml`)。
+GitHub Actions ワークフローを同梱:
+
+- `ci.yml` — プッシュごとに単体テスト・ビルド・E2Eスモークを実行
+- `deploy.yml` — mainへのプッシュでGitHub Pagesへ自動デプロイ
+- `monitor.yml` — 週次で外部配信 (PLATEAUカタログ・地理院タイル・ハザードタイル・ジオコーダ) の疎通を監視し、提供停止・仕様変更を早期検知
 
 ## 動作保証の範囲
 
