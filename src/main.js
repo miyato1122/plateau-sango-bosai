@@ -278,6 +278,32 @@ $('fabLayers').addEventListener('click', () => { panel.hidden = !panel.hidden; }
 $('panelClose').addEventListener('click', () => { panel.hidden = true; });
 if (window.matchMedia('(min-width: 641px)').matches) panel.hidden = false;
 
+// ---- アクセシビリティ: 文字サイズ切替・Escで閉じる ----
+const FONT_KEY = 'sango-font-large';
+const fontToggle = $('fontLarge');
+const applyFontSize = (large) => {
+  document.body.classList.toggle('font-large', large);
+  fontToggle.checked = large;
+};
+applyFontSize(localStorage.getItem(FONT_KEY) === '1');
+fontToggle.addEventListener('change', () => {
+  applyFontSize(fontToggle.checked);
+  localStorage.setItem(FONT_KEY, fontToggle.checked ? '1' : '0');
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  for (const id of ['resultCard', 'dashCard']) {
+    const el = $(id);
+    if (!el.hidden) {
+      el.hidden = true;
+      if (id === 'resultCard' && marker) marker.show = false;
+      return;
+    }
+  }
+  if (!panel.hidden && isMobile()) panel.hidden = true;
+});
+
 // ---- 地点リスク診断 ----
 const resultCard = $('resultCard');
 $('resultClose').addEventListener('click', () => {

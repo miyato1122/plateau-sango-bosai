@@ -16,7 +16,8 @@
   <link rel="stylesheet" href="./src/style.css" />
 </head>
 <body>
-  <div id="cesiumContainer"></div>
+  <div id="cesiumContainer" role="application"
+    aria-label="3D防災地図。地図をタップすると、その地点の災害リスクを診断します。キーボード操作の場合は住所検索をご利用ください"></div>
 
   <!-- ブランド -->
   <div id="brand" class="glass">
@@ -51,12 +52,17 @@
   </div>
 
   <!-- レイヤパネル (デスクトップ: 左カード / モバイル: ボトムシート) -->
-  <aside id="panel" class="glass" hidden>
+  <aside id="panel" class="glass" aria-labelledby="panelTitle" hidden>
     <div id="panelHandle" aria-hidden="true"></div>
     <header>
-      <h2>レイヤと凡例</h2>
+      <h2 id="panelTitle">レイヤと凡例</h2>
       <button id="panelClose" aria-label="閉じる">✕</button>
     </header>
+
+    <section>
+      <h3>表示設定</h3>
+      <label class="switch-row"><input type="checkbox" id="fontLarge" /><span class="switch"></span>文字を大きくする</label>
+    </section>
 
     <section>
       <h3>災害リスク</h3>
@@ -105,14 +111,14 @@
   </aside>
 
   <!-- 町全体統計ダッシュボード -->
-  <div id="dashCard" class="glass" hidden>
+  <div id="dashCard" class="glass" role="dialog" aria-labelledby="dashTitle" hidden>
     <header>
-      <h2>📊 三郷町全体の浸水リスク統計</h2>
+      <h2 id="dashTitle">📊 三郷町全体の浸水リスク統計</h2>
       <button id="dashClose" aria-label="閉じる">✕</button>
     </header>
     <section>
       <h3>浸水想定面積 (想定最大規模)</h3>
-      <div id="dashArea"></div>
+      <div id="dashArea" aria-live="polite"></div>
     </section>
     <section>
       <h3>建物別リスク (PLATEAU属性)</h3>
@@ -121,12 +127,12 @@
   </div>
 
   <!-- 診断結果カード -->
-  <div id="resultCard" class="glass" hidden>
+  <div id="resultCard" class="glass" role="dialog" aria-labelledby="resultTitle" hidden>
     <header>
       <h2 id="resultTitle">この地点のリスク</h2>
       <button id="resultClose" aria-label="閉じる">✕</button>
     </header>
-    <div id="resultBody"></div>
+    <div id="resultBody" aria-live="polite"></div>
   </div>
 
   <!-- オフライン状態バナー -->
