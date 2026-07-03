@@ -155,6 +155,13 @@ const ja = {
   'policy.lsSpecial': '土砂災害特別警戒区域の可能性: 大雨のときは必ず早めに区域の外へ立退き避難してください',
   'policy.lsWarning': '土砂災害警戒区域の可能性: 警戒レベル3で早めに避難を開始してください',
   'policy.none': 'この場所の想定リスクは低めです。それでも避難場所と経路を家族で確認しておきましょう',
+
+  'route.button': '🛡 危険区域を避けるルートを表示',
+  'route.calc': '計算中…',
+  'route.summary': '危険区域を考慮した徒歩ルート: 約{km}km・約{min}分',
+  'route.risky': '⚠️ うち約{m}mは浸水・土砂の想定区域内を通ります。災害時は通行できないおそれがあります',
+  'route.note': '青=想定区域外 / 赤点線=想定区域内。参考情報であり実際の通行可否は保証されません',
+  'route.failed': 'この地点付近の道路データがないため計算できませんでした',
 };
 
 const easy = {
@@ -275,6 +282,13 @@ const easy = {
   'policy.lsSpecial': 'どしゃさいがい の きけん が とても たかい ばしょ です。おおあめ の とき は かならず はやく にげて ください',
   'policy.lsWarning': 'どしゃさいがい の きけん が ある ばしょ です。レベル3 で はやめ に にげて ください',
   'policy.none': 'きけん は すくない ばしょ です。それでも にげる ばしょ を かぞく で たしかめて おきましょう',
+
+  'route.button': '🛡 あんぜんな みち を みる',
+  'route.calc': 'けいさん して います…',
+  'route.summary': 'あるいて やく{min}ぷん (やく{km}km) の みち です',
+  'route.risky': '⚠️ とちゅう の やく{m}m は あぶない ばしょ を とおります。き を つけて ください',
+  'route.note': 'あお = あんぜんな みち / あかい てんせん = あぶない かもしれない みち',
+  'route.failed': 'この ばしょ の みち の データ が ありません でした',
 };
 
 const en = {
@@ -416,6 +430,13 @@ const en = {
   'policy.lsSpecial': 'Possibly in a special landslide warning zone: always evacuate away early during heavy rain',
   'policy.lsWarning': 'Possibly in a landslide warning zone: start evacuating at alert level 3',
   'policy.none': 'Expected risk here is relatively low. Still, confirm evacuation sites and routes with your family',
+
+  'route.button': '🛡 Show route avoiding hazard zones',
+  'route.calc': 'Calculating…',
+  'route.summary': 'Walking route considering hazard zones: about {km} km, {min} min',
+  'route.risky': '⚠️ About {m} m passes through expected flood/landslide zones and may be impassable during a disaster',
+  'route.note': 'Blue = outside hazard zones / red dashes = inside. Reference only; passability is not guaranteed',
+  'route.failed': 'No road network data near this point',
 };
 
 // テストからも参照する (キー整合性の検証)
