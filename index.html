@@ -7,6 +7,12 @@
   <meta name="description" content="奈良県三郷町の3D防災マップ。地図をタップするだけで、その場所の洪水・土砂災害リスクと最寄りの避難場所がわかります。" />
   <title>さんごう防災3Dマップ｜奈良県三郷町</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="さんごう防災" />
   <link rel="stylesheet" href="./src/style.css" />
 </head>
 <body>
@@ -72,6 +78,13 @@
       <label class="switch-row"><input type="checkbox" id="layer-photo" /><span class="switch"></span>航空写真</label>
     </section>
 
+    <section>
+      <h3>オフライン利用</h3>
+      <p class="note">通信できない災害時に備えて、町内の地図とハザードデータを端末に保存できます (約10〜20MB)。保存後は電波がなくても地点診断と避難場所の確認ができます。</p>
+      <button type="button" id="offlineSave" class="action-btn">町内データを端末に保存</button>
+      <small id="offline-note"></small>
+    </section>
+
     <details id="statusDetails">
       <summary>データ取得状況</summary>
       <ul id="statusList"></ul>
@@ -115,6 +128,9 @@
     </header>
     <div id="resultBody"></div>
   </div>
+
+  <!-- オフライン状態バナー -->
+  <div id="offlineBadge" role="status" hidden>📡 オフライン表示中 — 保存済みデータで診断できます</div>
 
   <!-- トースト -->
   <div id="toast" role="status" hidden></div>

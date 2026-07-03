@@ -14,6 +14,10 @@ import { compassDirection } from './lib/geomath.js';
 import { BuildingRiskAnalyzer } from './buildingrisk.js';
 import { buildWaterColumns } from './floodgrid.js';
 import { initDashboard } from './dashboard.js';
+import {
+  registerServiceWorker, offlineSupported, offlineMeta,
+  saveOfflineArea, watchOnlineState,
+} from './offline.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -493,6 +497,58 @@ $('searchBar').addEventListener('submit', async (e) => {
   } catch (err) {
     console.error(err);
     toast('検索に失敗しました。通信状況をご確認ください。');
+  }
+});
+
+// ---- オフライン対応 (PWA) ----
+registerServiceWorker();
+
+function renderOfflineNote() {
+  const meta = offlineMeta();
+  if (!meta) {
+    $('offline-note').textContent = 'まだ保存されていません';
+    return;
+  }
+  const date = new Date(meta.savedAt);
+  $('offline-note').textContent =
+    `保存済み: ${date.getMonth() + 1}月${date.getDate()}日 (タイル${meta.ok + meta.notFound}件)`;
+}
+
+const offlineSaveBtn = $('offlineSave');
+if (!offlineSupported()) {
+  offlineSaveBtn.disabled = true;
+  $('offline-note').textContent = 'この端末・ブラウザでは利用できません';
+} else {
+  renderOfflineNote();
+  offlineSaveBtn.addEventListener('click', async () => {
+    if (!navigator.onLine) {
+      toast('オフラインのため保存できません。通信できる場所でお試しください。');
+      return;
+    }
+    offlineSaveBtn.disabled = true;
+    try {
+      await saveOfflineArea((done, total) => {
+        $('offline-note').textContent = `保存中… ${done}/${total}`;
+      });
+      renderOfflineNote();
+      toast('町内のデータを保存しました。電波がない場所でも診断できます。');
+    } catch (err) {
+      console.error(err);
+      $('offline-note').textContent = '保存に失敗しました';
+      toast(err.message ?? 'オフラインデータの保存に失敗しました');
+    } finally {
+      offlineSaveBtn.disabled = false;
+    }
+  });
+}
+
+watchOnlineState((online) => {
+  const badge = $('offlineBadge');
+  badge.hidden = online;
+  if (!online) {
+    badge.textContent = offlineMeta()
+      ? '📡 オフライン表示中 — 保存済みデータで診断できます'
+      : '📡 オフラインです — データ未保存のため表示が制限されます';
   }
 });
 
