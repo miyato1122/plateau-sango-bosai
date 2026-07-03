@@ -15,6 +15,19 @@ export const HAZARD_LAYERS = {
     url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_keizoku_data/{z}/{x}/{y}.png',
     maxZoom: 17,
   },
+  // 家屋倒壊等氾濫想定区域 — 該当区域は浸水深によらず立退き避難が必要
+  kaokutoukai_hanran: {
+    label: '家屋倒壊 (氾濫流)',
+    color: '#e11d48',
+    url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_kaokutoukai_hanran_data/{z}/{x}/{y}.png',
+    maxZoom: 17,
+  },
+  kaokutoukai_kagan: {
+    label: '家屋倒壊 (河岸侵食)',
+    color: '#9f1239',
+    url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_kaokutoukai_kagan_data/{z}/{x}/{y}.png',
+    maxZoom: 17,
+  },
   dosekiryu: {
     label: '土石流',
     color: '#8d6e63',

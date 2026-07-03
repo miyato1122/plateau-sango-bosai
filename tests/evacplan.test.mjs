@@ -34,6 +34,24 @@ test('evacuationPolicies: 浸水深と継続時間による方針の選択', () 
   );
 });
 
+test('evacuationPolicies: 家屋倒壊等氾濫想定区域は浸水深によらず立退き', () => {
+  // 区域内 + 浸水0.5〜3m → 立退き案内が先頭、垂直避難は案内しない
+  assert.deepEqual(
+    evacuationPolicies({ floodIdx: 1, keizoku: false, landslide: LS_NONE, kaokutoukai: true }),
+    ['policy.kaokutoukai']
+  );
+  // 区域内 + 3m以上 → 立退き2種 (区域と深さの両方の理由を提示)
+  assert.deepEqual(
+    evacuationPolicies({ floodIdx: 3, keizoku: false, landslide: LS_NONE, kaokutoukai: true }),
+    ['policy.kaokutoukai', 'policy.floodLeave']
+  );
+  // 区域内のみ (浸水クラスなし)
+  assert.deepEqual(
+    evacuationPolicies({ floodIdx: -1, keizoku: false, landslide: LS_NONE, kaokutoukai: true }),
+    ['policy.kaokutoukai']
+  );
+});
+
 test('evacuationPolicies: 土砂災害は特別警戒区域を優先', () => {
   assert.deepEqual(
     evacuationPolicies({
@@ -55,11 +73,13 @@ test('evacuationPolicies: 全キーが3言語の辞書に存在する', () => {
   const allKeys = new Set();
   for (const floodIdx of [-1, 0, 1, 2]) {
     for (const keizoku of [false, true]) {
-      for (const zone of [null, 'warning', 'special']) {
-        evacuationPolicies({
-          floodIdx, keizoku,
-          landslide: { dosekiryu: zone, kyukeisha: null, jisuberi: null },
-        }).forEach((k) => allKeys.add(k));
+      for (const kaokutoukai of [false, true]) {
+        for (const zone of [null, 'warning', 'special']) {
+          evacuationPolicies({
+            floodIdx, keizoku, kaokutoukai,
+            landslide: { dosekiryu: zone, kyukeisha: null, jisuberi: null },
+          }).forEach((k) => allKeys.add(k));
+        }
       }
     }
   }

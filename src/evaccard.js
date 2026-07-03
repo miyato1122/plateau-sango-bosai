@@ -138,6 +138,14 @@ export async function openEvacCard(diag, shelters, toast) {
     riskRows.push(`<li>🌊 ${t('diag.floodSafe')}</li>`);
   }
   if (risk.keizoku && flood) riskRows.push(`<li>⏳ ${t('diag.keizoku')}</li>`);
+  const kk = risk.kaokutoukai ?? {};
+  const kkTypes = [
+    kk.hanran && t('ls.hanran'),
+    kk.kagan && t('ls.kagan'),
+  ].filter(Boolean);
+  if (kkTypes.length) {
+    riskRows.push(`<li>🏚️ ${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}</li>`);
+  }
   const ls = risk.landslide;
   const typesOf = (zone) => [
     ls.dosekiryu === zone && t('ls.dosekiryu'),
@@ -160,6 +168,7 @@ export async function openEvacCard(diag, shelters, toast) {
     floodIdx,
     keizoku: risk.keizoku,
     landslide: risk.landslide,
+    kaokutoukai: kkTypes.length > 0,
   }).map((key) => t(key, { label: flood?.label ?? '' }));
 
   // 避難先 (近い順2件)

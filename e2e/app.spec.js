@@ -76,7 +76,7 @@ test('起動: 主要UIが表示される', async ({ page }) => {
   await expect(page.locator('#brand')).toBeVisible();
   await expect(page.locator('#panel')).toBeVisible();
   await expect(page.locator('#offlineSave')).toBeVisible();
-  await expect(page.locator('#hazardChips .chip')).toHaveCount(5);
+  await expect(page.locator('#hazardChips .chip')).toHaveCount(7);
 });
 
 test('タップ診断: 地図クリックで診断カードが開き洪水・土砂の行が出る', async ({ page }) => {

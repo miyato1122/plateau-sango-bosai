@@ -426,6 +426,19 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
           <div>${t('diag.keizoku')}</div></div>`);
     }
 
+    // 家屋倒壊等氾濫想定区域 (浸水深によらず立退き避難が必要)
+    const kk = risk.kaokutoukai ?? {};
+    const kkTypes = [
+      kk.hanran && t('ls.hanran'),
+      kk.kagan && t('ls.kagan'),
+    ].filter(Boolean);
+    if (kkTypes.length) {
+      rows.push(`
+        <div class="risk-row bad"><span class="icon">🏚️</span>
+          <div>${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}
+            <span class="advice">${t('diag.kaokutoukaiAdvice')}</span></div></div>`);
+    }
+
     // 土砂災害: 特別警戒区域 (レッドゾーン) と警戒区域を分けて表示
     const ls = risk.landslide;
     const typesOf = (zone) => [
