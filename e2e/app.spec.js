@@ -164,6 +164,13 @@ test('安全ルート: 道路網データが無い場合はボタンを出さな
   await expect(page.locator('#safeRouteBox .route-btn')).toHaveCount(0);
 });
 
+test('このアプリについて: パネルからリンクされ、プライバシーポリシーが表示される', async ({ page }) => {
+  await expect(page.locator('#panel a[href="./about.html"]')).toBeAttached();
+  await page.goto('/about.html');
+  await expect(page.locator('h1')).toContainText('さんごう防災3Dマップについて');
+  await expect(page.locator('main')).toContainText('サーバーに送信されません');
+});
+
 test('言語切替: やさしい日本語と英語がUIに反映される', async ({ page }) => {
   await page.selectOption('#langSelect', 'easy');
   await expect(page.locator('#panelTitle')).toHaveText('ちず の せってい');

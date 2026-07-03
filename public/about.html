@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f3a5f" />
+  <title>このアプリについて・プライバシーポリシー｜さんごう防災3Dマップ</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0; padding: 0; background: #f1f5f9; color: #1e293b;
+      font-family: "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif;
+      line-height: 1.75;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; background: #fff; min-height: 100vh; }
+    h1 { font-size: 22px; color: #0f3a5f; margin: 8px 0 4px; }
+    h2 { font-size: 17px; color: #0f3a5f; border-bottom: 2px solid #dbeafe; padding-bottom: 4px; margin-top: 32px; }
+    h3 { font-size: 14.5px; margin-top: 20px; }
+    a { color: #0f6fb8; }
+    .back { display: inline-block; margin-bottom: 12px; font-size: 14px; text-decoration: none; }
+    .lead { color: #64748b; font-size: 13px; margin-top: 0; }
+    .box { background: #eff6ff; border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; white-space: nowrap; }
+    .placeholder { background: #fef9c3; padding: 0 4px; border-radius: 4px; }
+    footer { margin-top: 40px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+    @media (max-width: 480px) { main { padding: 16px 14px 48px; } }
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">← 地図にもどる</a>
+  <h1>🛡️ さんごう防災3Dマップについて</h1>
+  <p class="lead">最終更新: 2026年7月3日</p>
+
+  <h2>1. このアプリの目的</h2>
+  <p>
+    本アプリは、奈良県三郷町の3D都市モデル (Project PLATEAU) と国の公開ハザード情報を用いて、
+    「自分のいる場所・住んでいる場所にどんな災害リスクがあり、どこへ逃げればよいか」を
+    住民のみなさまが直感的に確認できるようにすることを目的とした防災Webアプリです。
+  </p>
+  <div class="box">
+    ⚠️ 本アプリの表示は<b>参考情報</b>です。想定は最新の指定・調査と異なる場合があります。
+    実際の避難にあたっては、三郷町が発表する避難情報および公式ハザードマップに従ってください。
+  </div>
+
+  <h2>2. 運営者・お問い合わせ</h2>
+  <table>
+    <tr><th>運営者</th><td><span class="placeholder">（公開時に運営者名を記載してください）</span></td></tr>
+    <tr><th>お問い合わせ</th><td><span class="placeholder">（公開時に問い合わせ先を記載してください）</span></td></tr>
+    <tr><th>ソースコード</th><td>MITライセンスで公開しています (<a href="https://github.com/miyato1122/plateau-sango-bosai" target="_blank" rel="noopener">GitHub</a>)</td></tr>
+  </table>
+
+  <h2>3. プライバシーポリシー</h2>
+
+  <h3>3-1. 位置情報・診断地点はサーバーに送信されません</h3>
+  <p>
+    「現在地を診断」で取得する位置情報や、地図のタップ・住所検索で指定した地点の情報は、
+    <b>すべてお使いの端末の中だけで処理</b>されます。本アプリは位置情報や診断結果を
+    収集・送信・保存するサーバーを<b>持っていません</b>。
+  </p>
+
+  <h3>3-2. 端末に保存される情報</h3>
+  <p>以下の情報を、機能の提供のためにお使いの端末内 (ブラウザのストレージ) にのみ保存します。
+     いずれも端末の外には送信されず、ブラウザの設定からいつでも削除できます。</p>
+  <table>
+    <tr><th>表示設定</th><td>文字サイズ・言語などの設定</td></tr>
+    <tr><th>オフライン用データ</th><td>「町内データを端末に保存」で取得した地図・ハザードタイル・避難所データ</td></tr>
+    <tr><th>利用回数の記録</th><td>診断などの機能が使われた回数 (端末内のみの集計で、個人の特定・追跡は行いません)</td></tr>
+  </table>
+
+  <h3>3-3. 共有リンクについて</h3>
+  <p>
+    「この場所のリンクをコピー」で作成されるリンクには、選択した地点の緯度経度
+    (および任意の名称) が含まれます。リンクは利用者ご自身が作成・送付するものであり、
+    運営者がその内容を受け取ることはありません。自宅の位置が含まれる場合があるため、
+    送付先にはご注意ください。
+  </p>
+
+  <h3>3-4. 外部のデータ配信サービスへのアクセス</h3>
+  <p>
+    本アプリは地図・ハザード情報を表示する際、国等の公開配信サービス
+    (国土地理院・ハザードマップポータルサイト・Project PLATEAU配信サービス等) へ
+    お使いの端末から直接アクセスします。その際、通信に伴う情報 (IPアドレス等) は
+    各配信元の定めに従って取り扱われます。本アプリが地点を特定できる情報を
+    これらのサービスに付加して送ることはありません
+    (地図タイルの取得は、表示している地域の範囲が配信元に伝わる仕組みです)。
+  </p>
+  <p>
+    避難場所への「経路を見る」リンクはGoogleマップ (外部サービス) を開きます。
+    以降の取り扱いはGoogleのプライバシーポリシーに従います。
+  </p>
+
+  <h3>3-5. アクセス解析・Cookie</h3>
+  <p>
+    現在、本アプリはアクセス解析サービス・広告・トラッキングCookieを<b>使用していません</b>。
+    将来、利用状況の把握のために解析を導入する場合は、個人を特定しない方式を採用し、
+    本ページで事前にお知らせします。
+  </p>
+
+  <h2>4. 免責事項</h2>
+  <ul>
+    <li>本アプリの表示は、国等が公開するデータに基づく参考情報であり、災害の発生やその規模を保証・予測するものではありません。</li>
+    <li>浸水深・警戒区域の判定は配信タイルの解析によるもので、境界付近では実際の指定と異なる場合があります。</li>
+    <li>「危険区域を避けるルート」は想定区域データに基づく参考経路であり、実際の通行可否・安全を保証するものではありません。</li>
+    <li>データ配信サービスの停止・変更等により、一部機能が利用できなくなる場合があります。</li>
+    <li>本アプリの利用により生じた損害について、運営者は責任を負いかねます。</li>
+  </ul>
+
+  <h2>5. 出典・ライセンス</h2>
+  <ul>
+    <li>3D都市モデル (Project PLATEAU)・避難施設等 / 国土交通省</li>
+    <li>PLATEAU-Terrain (3D地形) / 国土交通省 — 地形データは、測量法に基づく国土地理院長承認（使用）R3JHs 778を得て使用</li>
+    <li>地理院タイル (淡色地図・空中写真・標高タイル) / 国土地理院 — 標高タイルを加工して3D浸水表示を作成</li>
+    <li>重ねるハザードマップ (洪水浸水想定・浸水継続時間・土砂災害警戒区域) / 国土地理院 — 配信タイルを解析してリスク判定・面積集計に利用</li>
+    <li>指定緊急避難場所データ・地名検索API / 国土地理院</li>
+    <li>安全ルートの道路網データ (同梱時): © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL)</li>
+    <li>地形表示: CesiumJS (Apache License 2.0)</li>
+    <li>本アプリのソースコード: MIT License</li>
+  </ul>
+
+  <footer>
+    さんごう防災3Dマップ｜このページの内容は予告なく更新されることがあります。
+  </footer>
+</main>
+</body>
+</html>
