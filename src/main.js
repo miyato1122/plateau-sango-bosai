@@ -21,6 +21,7 @@ import {
 } from './offline.js';
 import { openEvacCard } from './evaccard.js';
 import { loadRoads, showSafeRoute, clearRoute } from './saferoute.js';
+import { track } from './lib/metrics.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -398,6 +399,7 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
     const risk = await diagnosePoint(lon, lat);
     lastDiagnosis = { lon, lat, name: placeName ?? null, risk };
     $('makeCardBtn').hidden = false;
+    track('diagnosis');
     const rows = [];
     if (extraRowHtml) rows.push(extraRowHtml);
 
@@ -502,6 +504,7 @@ async function attachSafeRoute(lon, lat, shelter) {
         note.textContent = t('route.failed');
         return;
       }
+      track('safe_route');
       const parts = [t('route.summary', {
         km: (sum.lengthM / 1000).toFixed(1),
         min: sum.minutes,
@@ -673,6 +676,7 @@ if (!offlineSupported()) {
         $('offline-note').textContent = t('offline.saving', { done, total });
       });
       renderOfflineNote();
+      track('offline_save');
       toast(t('offline.done'));
     } catch (err) {
       console.error(err);
@@ -695,6 +699,7 @@ watchOnlineState((online) => {
 // ---- わが家の避難カード ----
 $('makeCardBtn').addEventListener('click', () => {
   if (!lastDiagnosis) return;
+  track('evac_card');
   openEvacCard(lastDiagnosis, shelters, toast).catch((err) => {
     console.error(err);
     toast(t('err.diag'));
