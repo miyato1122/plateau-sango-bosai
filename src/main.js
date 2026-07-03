@@ -20,6 +20,7 @@ import {
   saveOfflineArea, watchOnlineState,
 } from './offline.js';
 import { openEvacCard } from './evaccard.js';
+import { loadRoads, showSafeRoute, clearRoute } from './saferoute.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -326,7 +327,10 @@ document.addEventListener('keydown', (e) => {
     const el = $(id);
     if (!el.hidden) {
       el.hidden = true;
-      if (id === 'resultCard' && marker) marker.show = false;
+      if (id === 'resultCard') {
+        if (marker) marker.show = false;
+        clearRoute(viewer);
+      }
       return;
     }
   }
@@ -338,6 +342,7 @@ const resultCard = $('resultCard');
 $('resultClose').addEventListener('click', () => {
   resultCard.hidden = true;
   if (marker) marker.show = false;
+  clearRoute(viewer);
 });
 
 let marker = null;
@@ -382,6 +387,7 @@ let lastDiagnosis = null;
 
 async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
   showMarker(lon, lat);
+  clearRoute(viewer);
   $('resultTitle').textContent = placeName ?? t('diag.title');
   $('resultBody').innerHTML = `<div class="loading-dots">${t('diag.loading')}</div>`;
   $('makeCardBtn').hidden = true;
@@ -460,6 +466,7 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
           <a class="route-link" target="_blank" rel="noopener"
              href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${s.lat},${s.lon}&travelmode=walking">
              ${t('shelter.route')}</a>
+          <div id="safeRouteBox"></div>
         </div>`);
     }
 
@@ -468,10 +475,46 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
     }
     rows.push(`<p class="result-note">${t('note.source')}</p>`);
     $('resultBody').innerHTML = rows.join('');
+    if (nearest) attachSafeRoute(lon, lat, nearest.shelter);
   } catch (err) {
     console.error(err);
     $('resultBody').innerHTML = `<p class="result-note">${t('err.diag')}</p>`;
   }
+}
+
+// 安全避難ルートのボタン (道路網データ public/data/roads.json がある場合のみ表示)
+async function attachSafeRoute(lon, lat, shelter) {
+  if (!(await loadRoads())) return;
+  const box = $('safeRouteBox');
+  if (!box || !document.contains(box)) return; // 診断が更新済みなら何もしない
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'action-btn route-btn';
+  btn.textContent = t('route.button');
+  const note = document.createElement('div');
+  note.className = 'meta';
+  box.append(btn, note);
+  btn.addEventListener('click', async () => {
+    note.textContent = t('route.calc');
+    try {
+      const sum = await showSafeRoute(viewer, { lon, lat }, shelter);
+      if (!sum) {
+        note.textContent = t('route.failed');
+        return;
+      }
+      const parts = [t('route.summary', {
+        km: (sum.lengthM / 1000).toFixed(1),
+        min: sum.minutes,
+      })];
+      if (sum.riskyM > 0) parts.push(t('route.risky', { m: Math.round(sum.riskyM) }));
+      parts.push(t('route.note'));
+      note.textContent = parts.join(' ');
+      viewer.scene.requestRender?.();
+    } catch (err) {
+      console.error(err);
+      note.textContent = t('route.failed');
+    }
+  });
 }
 
 // 避難所カード (InfoBoxの代わり)

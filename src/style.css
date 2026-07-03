@@ -296,6 +296,10 @@ html, body {
 }
 #panel section .note { color: var(--ink-sub); font-size: calc(11px * var(--fs, 1)); margin: 2px 0 4px; }
 
+/* 安全避難ルート */
+.route-btn { min-height: 38px; font-size: calc(12.5px * var(--fs, 1)); margin: 8px 0 4px; }
+#safeRouteBox .meta { margin-top: 4px; line-height: 1.5; }
+
 /* ---- わが家の避難カード ---- */
 #evacCard {
   position: fixed; inset: 0; z-index: 100;

@@ -122,6 +122,48 @@ test('共有リンク (?loc=): 起動時にその地点を自動診断する', a
   await expect(page.locator('#resultBody')).toContainText('0.5〜3.0m', { timeout: 15000 });
 });
 
+// 勢野西周辺を覆う格子状の道路網 (全エッジ安全)
+function gridRoads() {
+  const nodes = [];
+  const edges = [];
+  const NX = 9;
+  const NY = 8;
+  const idx = (i, j) => j * NX + i;
+  for (let j = 0; j < NY; j++) {
+    for (let i = 0; i < NX; i++) {
+      nodes.push([135.690 + i * 0.001, 34.594 + j * 0.001]);
+    }
+  }
+  for (let j = 0; j < NY; j++) {
+    for (let i = 0; i < NX; i++) {
+      if (i + 1 < NX) edges.push([idx(i, j), idx(i + 1, j), 92, -1, 0]);
+      if (j + 1 < NY) edges.push([idx(i, j), idx(i, j + 1), 111, -1, 0]);
+    }
+  }
+  return { version: 1, nodes, edges };
+}
+
+test('安全ルート: 道路網データがある場合にボタンが出て経路サマリを表示する', async ({ page }) => {
+  await page.route('**/data/roads.json', (route) =>
+    route.fulfill({ json: gridRoads() }));
+  await page.goto('/'); // ルート登録後に読み込み直す
+  await page.fill('#searchInput', '勢野西');
+  await page.press('#searchInput', 'Enter');
+  const btn = page.locator('#safeRouteBox .route-btn');
+  await expect(btn).toBeVisible({ timeout: 20000 });
+  await btn.click();
+  await expect(page.locator('#safeRouteBox .meta')).toContainText('徒歩ルート', { timeout: 15000 });
+  await expect(page.locator('#safeRouteBox .meta')).not.toContainText('想定区域内を通ります');
+});
+
+test('安全ルート: 道路網データが無い場合はボタンを出さない', async ({ page }) => {
+  await page.fill('#searchInput', '勢野西');
+  await page.press('#searchInput', 'Enter');
+  await expect(page.locator('#resultCard')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('#resultBody')).toContainText('最寄りの避難場所');
+  await expect(page.locator('#safeRouteBox .route-btn')).toHaveCount(0);
+});
+
 test('言語切替: やさしい日本語と英語がUIに反映される', async ({ page }) => {
   await page.selectOption('#langSelect', 'easy');
   await expect(page.locator('#panelTitle')).toHaveText('ちず の せってい');
