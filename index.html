@@ -22,31 +22,35 @@
   <!-- ブランド -->
   <div id="brand" class="glass">
     <span class="brand-mark">🛡️</span>
-    <span class="brand-text">さんごう防災3Dマップ<small>奈良県三郷町</small></span>
+    <span class="brand-text">さんごう防災3Dマップ<small data-i18n="brand.sub">奈良県三郷町</small></span>
   </div>
 
   <!-- 住所検索 -->
   <form id="searchBar" class="glass" autocomplete="off">
     <input id="searchInput" type="search" inputmode="search"
-      placeholder="住所で探す (例: 勢野西1丁目)" aria-label="住所検索" />
-    <button type="submit" aria-label="検索">
+      placeholder="住所で探す (例: 勢野西1丁目)" aria-label="住所検索"
+      data-i18n-placeholder="search.placeholder" data-i18n-aria="search.label" />
+    <button type="submit" aria-label="検索" data-i18n-aria="search.label">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
     </button>
   </form>
 
   <!-- フローティングボタン -->
   <div id="fabs">
-    <button id="fabLocate" class="fab fab-primary" title="現在地のリスクを診断">
+    <button id="fabLocate" class="fab fab-primary" title="現在地のリスクを診断" data-i18n-title="fab.locateTitle">
       <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
-      <span>現在地を診断</span>
+      <span data-i18n="fab.locate">現在地を診断</span>
     </button>
-    <button id="fabHome" class="fab" title="全体を表示" aria-label="全体表示">
+    <button id="fabHome" class="fab" title="全体を表示" aria-label="全体表示"
+      data-i18n-title="fab.home" data-i18n-aria="fab.home">
       <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     </button>
-    <button id="fabDash" class="fab" title="町全体の統計" aria-label="町全体の統計">
+    <button id="fabDash" class="fab" title="町全体の統計" aria-label="町全体の統計"
+      data-i18n-title="fab.dash" data-i18n-aria="fab.dash">
       <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
     </button>
-    <button id="fabLayers" class="fab" title="レイヤと凡例" aria-label="レイヤ設定">
+    <button id="fabLayers" class="fab" title="レイヤと凡例" aria-label="レイヤ設定"
+      data-i18n-title="panel.title" data-i18n-aria="fab.layers">
       <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
     </button>
   </div>
@@ -55,39 +59,42 @@
   <aside id="panel" class="glass" aria-labelledby="panelTitle" hidden>
     <div id="panelHandle" aria-hidden="true"></div>
     <header>
-      <h2 id="panelTitle">レイヤと凡例</h2>
-      <button id="panelClose" aria-label="閉じる">✕</button>
+      <h2 id="panelTitle" data-i18n="panel.title">レイヤと凡例</h2>
+      <button id="panelClose" aria-label="閉じる" data-i18n-aria="panel.close">✕</button>
     </header>
 
     <section>
-      <h3>表示設定</h3>
-      <label class="switch-row"><input type="checkbox" id="fontLarge" /><span class="switch"></span>文字を大きくする</label>
+      <h3 data-i18n="panel.display">表示設定</h3>
+      <label class="switch-row"><input type="checkbox" id="fontLarge" /><span class="switch"></span><span data-i18n="panel.fontLarge">文字を大きくする</span></label>
+      <label class="select-row"><span data-i18n="panel.lang">ことば / Language</span>
+        <select id="langSelect"></select>
+      </label>
     </section>
 
     <section>
-      <h3>災害リスク</h3>
+      <h3 data-i18n="panel.hazard">災害リスク</h3>
       <div class="chips" id="hazardChips"></div>
-      <label class="slider-row">重ね合わせの濃さ
+      <label class="slider-row"><span data-i18n="panel.opacity">重ね合わせの濃さ</span>
         <input type="range" id="hazardOpacity" min="10" max="100" value="65" />
       </label>
       <ul id="floodLegend" class="legend" aria-label="浸水深の凡例"></ul>
-      <label class="switch-row"><input type="checkbox" id="layer-water3d" /><span class="switch"></span>浸水深を3Dで体感 <small id="water3d-note"></small></label>
-      <label class="switch-row"><input type="checkbox" id="layer-bldgrisk" /><span class="switch"></span>建物をリスク別に色分け <small id="bldgrisk-note"></small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-water3d" /><span class="switch"></span><span data-i18n="panel.water3d">浸水深を3Dで体感</span> <small id="water3d-note"></small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-bldgrisk" /><span class="switch"></span><span data-i18n="panel.bldgrisk">建物をリスク別に色分け</span> <small id="bldgrisk-note"></small></label>
     </section>
 
     <section>
-      <h3>防災施設・地図</h3>
-      <label class="switch-row"><input type="checkbox" id="layer-shelters" checked /><span class="switch"></span>避難場所</label>
-      <label class="switch-row"><input type="checkbox" id="layer-emergency_route" disabled /><span class="switch"></span>緊急輸送道路 <small id="er-note">読込中…</small></label>
-      <label class="switch-row"><input type="checkbox" id="layer-border" disabled /><span class="switch"></span>町域界 <small id="border-note">読込中…</small></label>
-      <label class="switch-row"><input type="checkbox" id="layer-buildings" checked /><span class="switch"></span>3D建物 (PLATEAU)</label>
-      <label class="switch-row"><input type="checkbox" id="layer-photo" /><span class="switch"></span>航空写真</label>
+      <h3 data-i18n="panel.facilities">防災施設・地図</h3>
+      <label class="switch-row"><input type="checkbox" id="layer-shelters" checked /><span class="switch"></span><span data-i18n="panel.shelters">避難場所</span></label>
+      <label class="switch-row"><input type="checkbox" id="layer-emergency_route" disabled /><span class="switch"></span><span data-i18n="panel.route">緊急輸送道路</span> <small id="er-note">読込中…</small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-border" disabled /><span class="switch"></span><span data-i18n="panel.border">町域界</span> <small id="border-note">読込中…</small></label>
+      <label class="switch-row"><input type="checkbox" id="layer-buildings" checked /><span class="switch"></span><span data-i18n="panel.buildings">3D建物 (PLATEAU)</span></label>
+      <label class="switch-row"><input type="checkbox" id="layer-photo" /><span class="switch"></span><span data-i18n="panel.photo">航空写真</span></label>
     </section>
 
     <section>
-      <h3>オフライン利用</h3>
-      <p class="note">通信できない災害時に備えて、町内の地図とハザードデータを端末に保存できます (約10〜20MB)。保存後は電波がなくても地点診断と避難場所の確認ができます。</p>
-      <button type="button" id="offlineSave" class="action-btn">町内データを端末に保存</button>
+      <h3 data-i18n="panel.offline">オフライン利用</h3>
+      <p class="note" data-i18n="offline.desc">通信できない災害時に備えて、町内の地図とハザードデータを端末に保存できます (約10〜20MB)。保存後は電波がなくても地点診断と避難場所の確認ができます。</p>
+      <button type="button" id="offlineSave" class="action-btn" data-i18n="offline.save">町内データを端末に保存</button>
       <small id="offline-note"></small>
     </section>
 
@@ -113,15 +120,15 @@
   <!-- 町全体統計ダッシュボード -->
   <div id="dashCard" class="glass" role="dialog" aria-labelledby="dashTitle" hidden>
     <header>
-      <h2 id="dashTitle">📊 三郷町全体の浸水リスク統計</h2>
-      <button id="dashClose" aria-label="閉じる">✕</button>
+      <h2 id="dashTitle" data-i18n="dash.title">📊 三郷町全体の浸水リスク統計</h2>
+      <button id="dashClose" aria-label="閉じる" data-i18n-aria="panel.close">✕</button>
     </header>
     <section>
-      <h3>浸水想定面積 (想定最大規模)</h3>
+      <h3 data-i18n="dash.areaTitle">浸水想定面積 (想定最大規模)</h3>
       <div id="dashArea" aria-live="polite"></div>
     </section>
     <section>
-      <h3>建物別リスク (PLATEAU属性)</h3>
+      <h3 data-i18n="dash.bldgTitle">建物別リスク (PLATEAU属性)</h3>
       <div id="dashBuildings"></div>
     </section>
   </div>
@@ -129,8 +136,8 @@
   <!-- 診断結果カード -->
   <div id="resultCard" class="glass" role="dialog" aria-labelledby="resultTitle" hidden>
     <header>
-      <h2 id="resultTitle">この地点のリスク</h2>
-      <button id="resultClose" aria-label="閉じる">✕</button>
+      <h2 id="resultTitle" data-i18n="diag.title">この地点のリスク</h2>
+      <button id="resultClose" aria-label="閉じる" data-i18n-aria="panel.close">✕</button>
     </header>
     <div id="resultBody" aria-live="polite"></div>
   </div>
