@@ -1,0 +1,24 @@
+# 依存パッケージ・GitHub Actions の更新を週次で提案する。
+# CI (単体テスト+E2E) が通ることを確認してからマージすること。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tokyo
+    groups:
+      # 動作に影響しにくい開発依存はまとめて1本のPRに
+      dev-dependencies:
+        dependency-type: development
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tokyo
