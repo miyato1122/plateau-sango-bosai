@@ -1,0 +1,27 @@
+// 避難カードの「わが家の避難方針」を診断結果から決める純粋ロジック。
+// 返り値はi18n辞書のキー配列 (文言・翻訳は src/i18n.js が持つ)。
+//   floodIdx: 浸水深クラス添字 (-1=区域外, 0=0.5m未満, 1=0.5〜3m, 2以上=3m以上)
+//   keizoku: 浸水継続時間の想定区域内か
+//   landslide: { dosekiryu, kyukeisha, jisuberi } 各 null|'warning'|'special'
+export function evacuationPolicies({ floodIdx, keizoku, landslide }) {
+  const keys = [];
+  // 3m以上、または浸水が長引く区域での浸水は立退き避難一択
+  if (floodIdx >= 2 || (floodIdx >= 1 && keizoku)) {
+    keys.push('policy.floodLeave');
+  } else if (floodIdx === 1) {
+    keys.push('policy.floodVertical');
+  } else if (floodIdx === 0) {
+    keys.push('policy.floodShallow');
+  }
+  if (keizoku && floodIdx >= 0) keys.push('policy.keizoku');
+
+  const zones = Object.values(landslide ?? {});
+  if (zones.includes('special')) {
+    keys.push('policy.lsSpecial');
+  } else if (zones.includes('warning')) {
+    keys.push('policy.lsWarning');
+  }
+
+  if (keys.length === 0) keys.push('policy.none');
+  return keys;
+}

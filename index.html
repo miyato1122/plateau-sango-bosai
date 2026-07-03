@@ -140,7 +140,11 @@
       <button id="resultClose" aria-label="閉じる" data-i18n-aria="panel.close">✕</button>
     </header>
     <div id="resultBody" aria-live="polite"></div>
+    <button type="button" id="makeCardBtn" class="action-btn" data-i18n="card.button" hidden>🖨 わが家の避難カードを作る</button>
   </div>
+
+  <!-- わが家の避難カード (印刷用オーバーレイ) -->
+  <div id="evacCard" role="dialog" aria-label="わが家の避難カード" hidden></div>
 
   <!-- オフライン状態バナー -->
   <div id="offlineBadge" role="status" hidden>📡 オフライン表示中 — 保存済みデータで診断できます</div>
