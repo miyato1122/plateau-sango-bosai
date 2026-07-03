@@ -19,6 +19,7 @@ import {
   registerServiceWorker, offlineSupported, offlineMeta,
   saveOfflineArea, watchOnlineState,
 } from './offline.js';
+import { openEvacCard } from './evaccard.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -376,15 +377,21 @@ function floodClassText(flood) {
 
 const listSep = () => (currentLang() === 'en' ? ', ' : '・');
 
+// 直近の診断結果 (避難カード生成に使う)
+let lastDiagnosis = null;
+
 async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
   showMarker(lon, lat);
   $('resultTitle').textContent = placeName ?? t('diag.title');
   $('resultBody').innerHTML = `<div class="loading-dots">${t('diag.loading')}</div>`;
+  $('makeCardBtn').hidden = true;
   resultCard.hidden = false;
   if (isMobile()) panel.hidden = true; // モバイルでは結果カードと重なるため閉じる
 
   try {
     const risk = await diagnosePoint(lon, lat);
+    lastDiagnosis = { lon, lat, name: placeName ?? null, risk };
+    $('makeCardBtn').hidden = false;
     const rows = [];
     if (extraRowHtml) rows.push(extraRowHtml);
 
@@ -469,6 +476,7 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
 
 // 避難所カード (InfoBoxの代わり)
 function showShelterCard(s) {
+  $('makeCardBtn').hidden = true;
   $('resultTitle').textContent = t('shelter.info');
   $('resultBody').innerHTML = `
     <div class="shelter-row">🏫 <b>${escapeHtml(s.name)}</b>
@@ -640,6 +648,31 @@ watchOnlineState((online) => {
     badge.textContent = offlineMeta() ? t('offline.badgeSaved') : t('offline.badgeNone');
   }
 });
+
+// ---- わが家の避難カード ----
+$('makeCardBtn').addEventListener('click', () => {
+  if (!lastDiagnosis) return;
+  openEvacCard(lastDiagnosis, shelters, toast).catch((err) => {
+    console.error(err);
+    toast(t('err.diag'));
+  });
+});
+
+// ---- 共有リンク (?loc=lat,lon&name=…) で開かれた場合はその地点を診断 ----
+(function handleSharedLocation() {
+  const params = new URLSearchParams(location.search);
+  const loc = params.get('loc');
+  if (!loc) return;
+  const [lat, lon] = loc.split(',').map(Number);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.008, 1500),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-40), roll: 0 },
+    duration: 0,
+  });
+  // 避難所データの読み込みを少し待ってから診断 (未着でも診断自体は動く)
+  setTimeout(() => runDiagnosis(lon, lat, params.get('name') ?? undefined), 800);
+})();
 
 // ---- 初回ヒント ----
 if (!localStorage.getItem('sango-hint-shown')) {

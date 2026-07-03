@@ -95,6 +95,21 @@ export function parseOfficialShelters(geojson) {
   return shelters;
 }
 
+// 近い順の避難場所n件。disasterFilter指定時は対応災害で絞り、該当なしなら全件。
+// (対応災害が未指定の施設はどのフィルタでも候補に含める — nearestShelterと同じ規則)
+export function nearestShelters(shelters, lon, lat, disasterFilter = null, n = 2) {
+  const matches = (s) =>
+    !disasterFilter ||
+    s.disasters.length === 0 ||
+    s.disasters.some((d) => d.includes(disasterFilter));
+  let list = shelters.filter(matches);
+  if (list.length === 0) list = shelters;
+  return list
+    .map((s) => ({ shelter: s, dist: distanceMeters(lon, lat, s.lon, s.lat) }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, n);
+}
+
 // 最寄り避難場所。disasterFilter指定時は対応災害で絞り、該当なしなら全件で再探索。
 export function nearestShelter(shelters, lon, lat, disasterFilter = null) {
   const pick = (filter) => {

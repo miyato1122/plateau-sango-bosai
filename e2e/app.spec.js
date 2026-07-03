@@ -99,6 +99,29 @@ test('住所検索: 診断カードが開きモック洪水タイルの浸水深
   await expect(page.locator('#resultBody')).toContainText('最寄りの避難場所');
 });
 
+test('避難カード: 診断結果から生成され、避難先・警戒レベル・共有URLを含む', async ({ page }) => {
+  await page.fill('#searchInput', '勢野西');
+  await page.press('#searchInput', 'Enter');
+  await expect(page.locator('#makeCardBtn')).toBeVisible({ timeout: 15000 });
+  await page.click('#makeCardBtn');
+  await expect(page.locator('#evacCard')).toBeVisible();
+  const sheet = page.locator('#evacCard .ec-sheet');
+  await expect(sheet).toContainText('わが家の避難カード');
+  await expect(sheet).toContainText('0.5〜3.0m');            // 診断結果の引き継ぎ
+  await expect(sheet).toContainText('警戒レベル3');           // 行動表
+  await expect(sheet.locator('.ec-shelter')).toHaveCount(2); // 近い順2件
+  await expect(sheet).toContainText('?loc=34.599');           // 共有URL
+  await page.click('#ecClose');
+  await expect(page.locator('#evacCard')).toBeHidden();
+});
+
+test('共有リンク (?loc=): 起動時にその地点を自動診断する', async ({ page }) => {
+  await page.goto('/?loc=34.59900,135.69400&name=%E8%87%AA%E5%AE%85');
+  await expect(page.locator('#resultCard')).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('#resultTitle')).toContainText('自宅');
+  await expect(page.locator('#resultBody')).toContainText('0.5〜3.0m', { timeout: 15000 });
+});
+
 test('言語切替: やさしい日本語と英語がUIに反映される', async ({ page }) => {
   await page.selectOption('#langSelect', 'easy');
   await expect(page.locator('#panelTitle')).toHaveText('ちず の せってい');
