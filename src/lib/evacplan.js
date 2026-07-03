@@ -3,12 +3,17 @@
 //   floodIdx: 浸水深クラス添字 (-1=区域外, 0=0.5m未満, 1=0.5〜3m, 2以上=3m以上)
 //   keizoku: 浸水継続時間の想定区域内か
 //   landslide: { dosekiryu, kyukeisha, jisuberi } 各 null|'warning'|'special'
-export function evacuationPolicies({ floodIdx, keizoku, landslide }) {
+export function evacuationPolicies({ floodIdx, keizoku, landslide, kaokutoukai = false }) {
   const keys = [];
+  // 家屋倒壊等氾濫想定区域は浸水深によらず立退き避難が必要
+  if (kaokutoukai) {
+    keys.push('policy.kaokutoukai');
+  }
   // 3m以上、または浸水が長引く区域での浸水は立退き避難一択
+  // (家屋倒壊等区域の場合は立退きを既に案内済みのため垂直避難の案内はしない)
   if (floodIdx >= 2 || (floodIdx >= 1 && keizoku)) {
     keys.push('policy.floodLeave');
-  } else if (floodIdx === 1) {
+  } else if (floodIdx === 1 && !kaokutoukai) {
     keys.push('policy.floodVertical');
   } else if (floodIdx === 0) {
     keys.push('policy.floodShallow');

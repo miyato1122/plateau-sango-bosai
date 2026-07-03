@@ -38,6 +38,8 @@ function offlineSources() {
     { url: GSI_DEM, zooms: [14] },
     { url: HAZARD_LAYERS.flood.url, zooms: [15, 16] },
     { url: HAZARD_LAYERS.keizoku.url, zooms: [16] },
+    { url: HAZARD_LAYERS.kaokutoukai_hanran.url, zooms: [16] },
+    { url: HAZARD_LAYERS.kaokutoukai_kagan.url, zooms: [16] },
     { url: HAZARD_LAYERS.dosekiryu.url, zooms: [16] },
     { url: HAZARD_LAYERS.kyukeisha.url, zooms: [16] },
     { url: HAZARD_LAYERS.jisuberi.url, zooms: [16] },
