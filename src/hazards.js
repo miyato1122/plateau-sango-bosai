@@ -9,6 +9,12 @@ export const HAZARD_LAYERS = {
     url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png',
     maxZoom: 17,
   },
+  keizoku: {
+    label: '浸水継続時間',
+    color: '#6366f1',
+    url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_keizoku_data/{z}/{x}/{y}.png',
+    maxZoom: 17,
+  },
   dosekiryu: {
     label: '土石流',
     color: '#8d6e63',

@@ -37,6 +37,7 @@ function offlineSources() {
     { url: GSI_PALE, zooms: [11, 12, 13, 14, 15, 16] },
     { url: GSI_DEM, zooms: [14] },
     { url: HAZARD_LAYERS.flood.url, zooms: [15, 16] },
+    { url: HAZARD_LAYERS.keizoku.url, zooms: [16] },
     { url: HAZARD_LAYERS.dosekiryu.url, zooms: [16] },
     { url: HAZARD_LAYERS.kyukeisha.url, zooms: [16] },
     { url: HAZARD_LAYERS.jisuberi.url, zooms: [16] },

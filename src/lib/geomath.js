@@ -121,6 +121,53 @@ export function floodClassIndex(pixel, tolerance = 60) {
   return FLOOD_DEPTH_CLASSES.indexOf(cls); // 「深さ不明」は -1 になる
 }
 
+// 地点の周辺 (radius=1 → 3×3ピクセル相当) のサンプル座標。中心が先頭。
+// タイル境界・区域境界での1ピクセル判定のブレを多数決で抑えるために使う。
+export function sampleGrid(lon, lat, z, radius = 1, tileSize = 256) {
+  const lonPerPx = 360 / (2 ** z * tileSize);
+  const latPerPx = lonPerPx * Math.cos((lat * Math.PI) / 180);
+  const points = [{ lon, lat }];
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      points.push({ lon: lon + dx * lonPerPx, lat: lat + dy * latPerPx });
+    }
+  }
+  return points;
+}
+
+// クラス添字の多数決 (先頭=中心)。
+//   - 中心がヒット、または周辺2点以上がヒットなら「該当」
+//   - クラスは該当サンプルの最頻値。同数の場合は安全側 (より深い方) を採用
+//   - 該当なしは -1
+export function majorityClassIndex(indices) {
+  const hits = indices.filter((i) => i >= 0);
+  const centerHit = indices[0] >= 0;
+  if (!centerHit && hits.length < 2) return -1;
+  const counts = new Map();
+  for (const i of hits) counts.set(i, (counts.get(i) ?? 0) + 1);
+  let best = -1;
+  let bestCount = 0;
+  for (const [idx, n] of counts) {
+    if (n > bestCount || (n === bestCount && idx > best)) {
+      best = idx;
+      bestCount = n;
+    }
+  }
+  return best;
+}
+
+// 土砂災害タイルのピクセル色 → 区域種別。
+// 重ねるハザードマップの土砂タイルは 警戒区域=黄系 / 特別警戒区域=赤系 の
+// 2色で描かれるため、色相で判別する (正確な凡例RGBに依存しないヒューリスティック)。
+// 'special' = 特別警戒区域の可能性 / 'warning' = 警戒区域 / null = 区域外
+export function classifyLandslideZone(pixel) {
+  if (!pixel || pixel.a === 0) return null;
+  const { r, g, b } = pixel;
+  if (r >= 170 && r - g >= 60 && r - b >= 60) return 'special'; // 赤系
+  return 'warning';
+}
+
 // Webメルカトルのピクセル解像度 (m/px)
 export function metersPerPixel(z, lat, tileSize = 256) {
   return (
