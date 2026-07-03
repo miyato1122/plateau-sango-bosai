@@ -22,6 +22,7 @@ import {
 import { openEvacCard } from './evaccard.js';
 import { loadRoads, showSafeRoute, clearRoute } from './saferoute.js';
 import { track } from './lib/metrics.js';
+import { startWeatherWatch, JMA_PAGE_URL } from './weather.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -721,6 +722,21 @@ $('makeCardBtn').addEventListener('click', () => {
   // 避難所データの読み込みを少し待ってから診断 (未着でも診断自体は動く)
   setTimeout(() => runDiagnosis(lon, lat, params.get('name') ?? undefined), 800);
 })();
+
+// ---- 気象警報バナー (三郷町に警報・注意報が発表中のときだけ表示) ----
+startWeatherWatch((summary) => {
+  const banner = $('weatherBanner');
+  if (!summary) {
+    banner.hidden = true;
+    return;
+  }
+  banner.textContent = `⚠️ ${t('weather.active', {
+    list: summary.names.join(listSep()),
+  })} — ${t('weather.link')}`;
+  banner.href = JMA_PAGE_URL;
+  banner.dataset.level = summary.level;
+  banner.hidden = false;
+});
 
 // ---- 初回ヒント ----
 if (!localStorage.getItem('sango-hint-shown')) {

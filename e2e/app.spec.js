@@ -56,6 +56,12 @@ async function mockExternal(page) {
         properties: { title: '奈良県生駒郡三郷町勢野西' },
       }]),
     }));
+  // 気象庁: 既定は「発表なし」
+  await page.route('https://www.jma.go.jp/**', (route) =>
+    route.fulfill({
+      status: 200, contentType: 'application/json', headers: cors,
+      body: JSON.stringify({ areaTypes: [] }),
+    }));
   // Cesium Ion (地形) は不通に
   await page.route('https://api.cesium.com/**', (route) => route.abort());
   await page.route('https://assets.ion.cesium.com/**', (route) => route.abort());
@@ -162,6 +168,38 @@ test('安全ルート: 道路網データが無い場合はボタンを出さな
   await expect(page.locator('#resultCard')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('#resultBody')).toContainText('最寄りの避難場所');
   await expect(page.locator('#safeRouteBox .route-btn')).toHaveCount(0);
+});
+
+test('気象警報バナー: 三郷町に警報発表中はバナーが表示される', async ({ page }) => {
+  await page.route('https://www.jma.go.jp/bosai/warning/data/warning/290000.json', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({
+        areaTypes: [{
+          areas: [{
+            code: '2934300',
+            warnings: [
+              { code: '03', status: '発表' },
+              { code: '18', status: '継続' },
+            ],
+          }],
+        }],
+      }),
+    }));
+  await page.goto('/');
+  const banner = page.locator('#weatherBanner');
+  await expect(banner).toBeVisible({ timeout: 10000 });
+  await expect(banner).toContainText('大雨警報');
+  await expect(banner).toContainText('洪水注意報');
+  expect(await banner.getAttribute('data-level')).toBe('warning');
+});
+
+test('気象警報バナー: 発表なし・取得不可のときは表示しない', async ({ page }) => {
+  await expect(page.locator('#brand')).toBeVisible();
+  await page.waitForTimeout(1500);
+  await expect(page.locator('#weatherBanner')).toBeHidden();
 });
 
 test('このアプリについて: パネルからリンクされ、プライバシーポリシーが表示される', async ({ page }) => {
