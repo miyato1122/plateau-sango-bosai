@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  sampleGrid, majorityClassIndex, classifyLandslideZone, tileCoords,
+  sampleGrid,
+  majorityClassIndex,
+  classifyLandslideZone,
+  tileCoords,
 } from '../src/lib/geomath.js';
 
 test('sampleGrid: 中心を先頭に9点を返し、間隔は1ピクセル相当', () => {
@@ -40,7 +43,7 @@ test('majorityClassIndex: 多数決と安全側タイブレーク', () => {
   // 同数なら深い方 (安全側)
   assert.equal(majorityClassIndex([1, 2, 1, 2, -1, -1, -1, -1, -1]), 2);
   // 全て区域外
-  assert.equal(majorityClassIndex(new Array(9).fill(-1)), -1);
+  assert.equal(majorityClassIndex(Array.from({ length: 9 }).fill(-1)), -1);
 });
 
 test('classifyLandslideZone: 黄系=警戒区域 / 赤系=特別警戒区域 / 透明=区域外', () => {

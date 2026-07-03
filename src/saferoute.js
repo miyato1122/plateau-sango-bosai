@@ -36,19 +36,21 @@ export async function showSafeRoute(viewer, from, to) {
   clearRoute(viewer);
   for (const seg of route.segments) {
     if (seg.coords.length < 2) continue;
-    routeEntities.push(viewer.entities.add({
-      polyline: {
-        positions: Cesium.Cartesian3.fromDegreesArray(seg.coords.flat()),
-        clampToGround: true,
-        width: seg.risky ? 7 : 8,
-        material: seg.risky
-          ? new Cesium.PolylineDashMaterialProperty({
-              color: Cesium.Color.fromCssColorString('#dc2626'),
-              dashLength: 12,
-            })
-          : Cesium.Color.fromCssColorString('#0f6fb8').withAlpha(0.95),
-      },
-    }));
+    routeEntities.push(
+      viewer.entities.add({
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArray(seg.coords.flat()),
+          clampToGround: true,
+          width: seg.risky ? 7 : 8,
+          material: seg.risky
+            ? new Cesium.PolylineDashMaterialProperty({
+                color: Cesium.Color.fromCssColorString('#dc2626'),
+                dashLength: 12,
+              })
+            : Cesium.Color.fromCssColorString('#0f6fb8').withAlpha(0.95),
+        },
+      }),
+    );
   }
   return {
     lengthM: route.lengthM,

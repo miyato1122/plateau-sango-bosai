@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["dist"],
+  "overrides": [
+    {
+      "files": ["public/sw.js"],
+      "env": { "worker": true, "serviceworker": true }
+    },
+    {
+      "files": ["scripts/**", "tests/**", "*.config.js"],
+      "env": { "node": true }
+    }
+  ]
+}

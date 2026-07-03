@@ -49,7 +49,9 @@ export function nearestNode(data, lon, lat, maxDistM = 400) {
 
 // 二分ヒープ (優先度付きキュー)
 class MinHeap {
-  constructor() { this.items = []; }
+  constructor() {
+    this.items = [];
+  }
   push(priority, value) {
     const items = this.items;
     items.push({ priority, value });
@@ -82,7 +84,9 @@ class MinHeap {
     }
     return top;
   }
-  get size() { return this.items.length; }
+  get size() {
+    return this.items.length;
+  }
 }
 
 // ダイクストラ法で from→to の最小コスト経路を探索する。
@@ -95,9 +99,9 @@ export function findRoute(data, fromLonLat, toLonLat, adj = null) {
   if (!from || !to) return null;
   const graph = adj ?? buildGraph(data);
 
-  const dist = new Array(data.nodes.length).fill(Infinity);
-  const prev = new Array(data.nodes.length).fill(-1);
-  const prevEdge = new Array(data.nodes.length).fill(null);
+  const dist = Array.from({ length: data.nodes.length }).fill(Infinity);
+  const prev = Array.from({ length: data.nodes.length }).fill(-1);
+  const prevEdge = Array.from({ length: data.nodes.length }).fill(null);
   dist[from.index] = 0;
   const heap = new MinHeap();
   heap.push(0, from.index);

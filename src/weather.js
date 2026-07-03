@@ -4,8 +4,7 @@ import { parseWarnings, summarizeWarnings } from './lib/jma.js';
 
 // 奈良県の警報JSONと三郷町の地域コード。コード体系は気象庁の内部仕様のため、
 // 変更された場合は対象地域が見つからず「表示なし」に縮退する (誤表示はしない)。
-export const JMA_WARNING_URL =
-  'https://www.jma.go.jp/bosai/warning/data/warning/290000.json';
+export const JMA_WARNING_URL = 'https://www.jma.go.jp/bosai/warning/data/warning/290000.json';
 export const SANGO_AREA_CODE = '2934300';
 // 詳細ページ (バナーから案内する公式ページ)
 export const JMA_PAGE_URL =

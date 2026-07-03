@@ -24,7 +24,9 @@ export function initDashboard(analyzer) {
     card.hidden = !card.hidden;
     if (!card.hidden) refresh();
   });
-  $('dashClose').addEventListener('click', () => { card.hidden = true; });
+  $('dashClose').addEventListener('click', () => {
+    card.hidden = true;
+  });
 
   let areaStats = null;
   let scanError = false;
@@ -54,7 +56,8 @@ export function initDashboard(analyzer) {
     $('dashArea').innerHTML = `
       <p class="dash-headline">${t('dash.areaHead', { km2: totalKm2.toFixed(2) })}</p>
       ${FLOOD_DEPTH_CLASSES.map((cls, i) =>
-        bar(classes[i].label, areaKm2[i], max, cls.css, t('dash.unitKm2'))).join('')}
+        bar(classes[i].label, areaKm2[i], max, cls.css, t('dash.unitKm2')),
+      ).join('')}
       <p class="result-note">${t('dash.areaNote')}</p>`;
   }
 
@@ -74,7 +77,8 @@ export function initDashboard(analyzer) {
         vert: stats.verticalEvacuationRisk.toLocaleString(),
       })}</p>
       ${FLOOD_DEPTH_CLASSES.map((cls, i) =>
-        bar(classes[i].label, stats.byClass[i], max, RISK_COLORS[i], t('dash.unitBldg'))).join('')}
+        bar(classes[i].label, stats.byClass[i], max, RISK_COLORS[i], t('dash.unitBldg')),
+      ).join('')}
       <p class="result-note">${t('dash.bldgNote')}</p>`;
   }
 

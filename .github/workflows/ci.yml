@@ -16,6 +16,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Lint (oxlint)
+        run: npm run lint
+      - name: フォーマット検査 (oxfmt)
+        run: npm run fmt:check
       - name: 単体テスト
         run: npm test
       - name: ビルド

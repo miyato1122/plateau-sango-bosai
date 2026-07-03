@@ -37,31 +37,45 @@ async function mockExternal(page) {
   // 土砂3種は404 (=区域外)、洪水タイルは一色のモック。
   // Playwrightは後から登録したルートを優先するため、汎用404を先に登録する。
   await page.route('https://disaportaldata.gsi.go.jp/**', (route) =>
-    route.fulfill({ status: 404, headers: cors, body: '' }));
-  await page.route('https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/**',
-    (route) => route.fulfill({
-      status: 200, contentType: 'image/png', headers: cors, body: floodTilePng,
-    }));
+    route.fulfill({ status: 404, headers: cors, body: '' }),
+  );
+  await page.route(
+    'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/**',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        headers: cors,
+        body: floodTilePng,
+      }),
+  );
   // 地理院タイル (ベースマップ・標高・skhb): 404で応答
   await page.route('https://cyberjapandata.gsi.go.jp/**', (route) =>
-    route.fulfill({ status: 404, headers: cors, body: '' }));
+    route.fulfill({ status: 404, headers: cors, body: '' }),
+  );
   // ジオコーダ: 勢野西の固定結果
   await page.route('https://msearch.gsi.go.jp/**', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       headers: cors,
-      body: JSON.stringify([{
-        geometry: { coordinates: [135.694, 34.599] },
-        properties: { title: '奈良県生駒郡三郷町勢野西' },
-      }]),
-    }));
+      body: JSON.stringify([
+        {
+          geometry: { coordinates: [135.694, 34.599] },
+          properties: { title: '奈良県生駒郡三郷町勢野西' },
+        },
+      ]),
+    }),
+  );
   // 気象庁: 既定は「発表なし」
   await page.route('https://www.jma.go.jp/**', (route) =>
     route.fulfill({
-      status: 200, contentType: 'application/json', headers: cors,
+      status: 200,
+      contentType: 'application/json',
+      headers: cors,
       body: JSON.stringify({ areaTypes: [] }),
-    }));
+    }),
+  );
   // Cesium Ion (地形) は不通に
   await page.route('https://api.cesium.com/**', (route) => route.abort());
   await page.route('https://assets.ion.cesium.com/**', (route) => route.abort());
@@ -113,10 +127,10 @@ test('避難カード: 診断結果から生成され、避難先・警戒レベ
   await expect(page.locator('#evacCard')).toBeVisible();
   const sheet = page.locator('#evacCard .ec-sheet');
   await expect(sheet).toContainText('わが家の避難カード');
-  await expect(sheet).toContainText('0.5〜3.0m');            // 診断結果の引き継ぎ
-  await expect(sheet).toContainText('警戒レベル3');           // 行動表
+  await expect(sheet).toContainText('0.5〜3.0m'); // 診断結果の引き継ぎ
+  await expect(sheet).toContainText('警戒レベル3'); // 行動表
   await expect(sheet.locator('.ec-shelter')).toHaveCount(2); // 近い順2件
-  await expect(sheet).toContainText('?loc=34.599');           // 共有URL
+  await expect(sheet).toContainText('?loc=34.599'); // 共有URL
   await page.click('#ecClose');
   await expect(page.locator('#evacCard')).toBeHidden();
 });
@@ -137,7 +151,7 @@ function gridRoads() {
   const idx = (i, j) => j * NX + i;
   for (let j = 0; j < NY; j++) {
     for (let i = 0; i < NX; i++) {
-      nodes.push([135.690 + i * 0.001, 34.594 + j * 0.001]);
+      nodes.push([135.69 + i * 0.001, 34.594 + j * 0.001]);
     }
   }
   for (let j = 0; j < NY; j++) {
@@ -150,8 +164,7 @@ function gridRoads() {
 }
 
 test('安全ルート: 道路網データがある場合にボタンが出て経路サマリを表示する', async ({ page }) => {
-  await page.route('**/data/roads.json', (route) =>
-    route.fulfill({ json: gridRoads() }));
+  await page.route('**/data/roads.json', (route) => route.fulfill({ json: gridRoads() }));
   await page.goto('/'); // ルート登録後に読み込み直す
   await page.fill('#searchInput', '勢野西');
   await page.press('#searchInput', 'Enter');
@@ -177,17 +190,22 @@ test('気象警報バナー: 三郷町に警報発表中はバナーが表示さ
       contentType: 'application/json',
       headers: { 'access-control-allow-origin': '*' },
       body: JSON.stringify({
-        areaTypes: [{
-          areas: [{
-            code: '2934300',
-            warnings: [
-              { code: '03', status: '発表' },
-              { code: '18', status: '継続' },
+        areaTypes: [
+          {
+            areas: [
+              {
+                code: '2934300',
+                warnings: [
+                  { code: '03', status: '発表' },
+                  { code: '18', status: '継続' },
+                ],
+              },
             ],
-          }],
-        }],
+          },
+        ],
       }),
-    }));
+    }),
+  );
   await page.goto('/');
   const banner = page.locator('#weatherBanner');
   await expect(banner).toBeVisible({ timeout: 10000 });
@@ -202,7 +220,9 @@ test('気象警報バナー: 発表なし・取得不可のときは表示しな
   await expect(page.locator('#weatherBanner')).toBeHidden();
 });
 
-test('このアプリについて: パネルからリンクされ、プライバシーポリシーが表示される', async ({ page }) => {
+test('このアプリについて: パネルからリンクされ、プライバシーポリシーが表示される', async ({
+  page,
+}) => {
   await expect(page.locator('#panel a[href="./about.html"]')).toBeAttached();
   await page.goto('/about.html');
   await expect(page.locator('h1')).toContainText('さんごう防災3Dマップについて');

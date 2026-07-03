@@ -39,9 +39,7 @@ const browser = await chromium.launch({
 const page = await browser.newPage();
 for (const { file, size, maskable } of jobs) {
   await page.setViewportSize({ width: size, height: size });
-  await page.setContent(
-    `<style>*{margin:0}</style>${iconSvg(size, { maskable })}`
-  );
+  await page.setContent(`<style>*{margin:0}</style>${iconSvg(size, { maskable })}`);
   await page.locator('svg').screenshot({
     omitBackground: !maskable,
     path: new URL(`../public/icons/${file}`, import.meta.url).pathname,

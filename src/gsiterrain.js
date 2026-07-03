@@ -7,7 +7,7 @@ import { gsiDemDecode } from './lib/geomath.js';
 // PLATEAU 3D Tilesは楕円体高基準のため、標高 (ジオイド基準) に
 // GEOID_OFFSET を加えて建物の足元と地面を一致させる。
 const MAX_LEVEL = 14; // dem_png (DEM10B 約10m解像度) の最大ズーム
-const SAMPLES = 65;   // 1タイルあたりの標高サンプル数 (65×65)
+const SAMPLES = 65; // 1タイルあたりの標高サンプル数 (65×65)
 
 export class GsiTerrainProvider {
   constructor() {
@@ -22,12 +22,11 @@ export class GsiTerrainProvider {
     this._canvas = document.createElement('canvas');
     this._canvas.width = this._canvas.height = 256;
     this._context = this._canvas.getContext('2d', { willReadFrequently: true });
-    this._levelZeroError =
-      Cesium.TerrainProvider.getEstimatedLevelZeroGeometricErrorForAHeightmap(
-        this.tilingScheme.ellipsoid,
-        SAMPLES,
-        this.tilingScheme.getNumberOfXTilesAtLevel(0)
-      );
+    this._levelZeroError = Cesium.TerrainProvider.getEstimatedLevelZeroGeometricErrorForAHeightmap(
+      this.tilingScheme.ellipsoid,
+      SAMPLES,
+      this.tilingScheme.getNumberOfXTilesAtLevel(0),
+    );
   }
 
   getLevelMaximumGeometricError(level) {
@@ -49,10 +48,12 @@ export class GsiTerrainProvider {
     });
     const promise = resource.fetchImage({ preferImageBitmap: true });
     if (!Cesium.defined(promise)) return undefined; // リクエスト過多時はCesium側が再試行する
-    return Promise.resolve(promise)
-      .then((image) => this._decode(image, level))
-      // 海域・日本域外などタイルが無い場合は標高0の平面 (子タイルなし) を返す
-      .catch(() => this._flatTile());
+    return (
+      Promise.resolve(promise)
+        .then((image) => this._decode(image, level))
+        // 海域・日本域外などタイルが無い場合は標高0の平面 (子タイルなし) を返す
+        .catch(() => this._flatTile())
+    );
   }
 
   _flatTile() {
@@ -74,9 +75,8 @@ export class GsiTerrainProvider {
       for (let col = 0; col < SAMPLES; col++) {
         const px = Math.round((col * (size - 1)) / (SAMPLES - 1));
         const i = (py * size + px) * 4;
-        const h = pixels[i + 3] === 0
-          ? null
-          : gsiDemDecode(pixels[i], pixels[i + 1], pixels[i + 2]);
+        const h =
+          pixels[i + 3] === 0 ? null : gsiDemDecode(pixels[i], pixels[i + 1], pixels[i + 2]);
         heights[row * SAMPLES + col] = (h ?? 0) + GEOID_OFFSET;
       }
     }

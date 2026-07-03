@@ -32,7 +32,8 @@ const ja = {
   'panel.offline': 'オフライン利用',
   'panel.close': '閉じる',
 
-  'offline.desc': '通信できない災害時に備えて、町内の地図とハザードデータを端末に保存できます (約10〜20MB)。保存後は電波がなくても地点診断と避難場所の確認ができます。',
+  'offline.desc':
+    '通信できない災害時に備えて、町内の地図とハザードデータを端末に保存できます (約10〜20MB)。保存後は電波がなくても地点診断と避難場所の確認ができます。',
   'offline.save': '町内データを端末に保存',
   'offline.none': 'まだ保存されていません',
   'offline.saved': '保存済み: {date} (タイル{count}件)',
@@ -71,12 +72,16 @@ const ja = {
   'diag.floodSafe': '洪水の浸水想定区域<b>外</b>です',
   'diag.landslide': '土砂災害警戒区域 (<b>{types}</b>) に該当する可能性があります',
   'diag.landslideAdvice': '大雨のときは早めに区域の外へ避難してください',
-  'diag.landslideSpecial': '土砂災害<b>特別警戒区域</b> (<b>{types}</b>) に該当する可能性があります',
-  'diag.landslideSpecialAdvice': '建物が壊れるおそれのある区域です。大雨のときは必ず区域の外へ立退き避難してください (タイル色からの参考判定)',
+  'diag.landslideSpecial':
+    '土砂災害<b>特別警戒区域</b> (<b>{types}</b>) に該当する可能性があります',
+  'diag.landslideSpecialAdvice':
+    '建物が壊れるおそれのある区域です。大雨のときは必ず区域の外へ立退き避難してください (タイル色からの参考判定)',
   'diag.landslideSafe': '土砂災害警戒区域<b>外</b>です',
-  'diag.keizoku': '浸水した水が引くまで長時間かかるおそれがあります (浸水継続時間の想定区域内。「浸水継続時間」レイヤで確認できます)',
+  'diag.keizoku':
+    '浸水した水が引くまで長時間かかるおそれがあります (浸水継続時間の想定区域内。「浸水継続時間」レイヤで確認できます)',
   'diag.kaokutoukai': '家屋倒壊等氾濫想定区域 (<b>{types}</b>) に該当する可能性があります',
-  'diag.kaokutoukaiAdvice': '家が流失・倒壊するおそれのある区域です。浸水深によらず立退き避難が必要です',
+  'diag.kaokutoukaiAdvice':
+    '家が流失・倒壊するおそれのある区域です。浸水深によらず立退き避難が必要です',
   'ls.hanran': '氾濫流',
   'ls.kagan': '河岸侵食',
   'ls.dosekiryu': '土石流',
@@ -101,7 +106,8 @@ const ja = {
   'bldg.noAttr': 'この3D都市モデルには建物単位の浸水ランク属性が含まれていません',
 
   'note.outside': '⚠️ この地点は三郷町の外です。表示は全国データに基づく参考値です。',
-  'note.source': '出典: ハザードマップポータルサイト (想定最大規模)。参考情報であり、実際の災害はこれと異なる場合があります。',
+  'note.source':
+    '出典: ハザードマップポータルサイト (想定最大規模)。参考情報であり、実際の災害はこれと異なる場合があります。',
 
   'err.diag': '診断に失敗しました。通信状況をご確認のうえ、もう一度お試しください。',
   'err.search': '検索に失敗しました。通信状況をご確認ください。',
@@ -118,9 +124,12 @@ const ja = {
   'dash.areaHead': '想定最大規模の洪水で、町内 <b>約{km2} km²</b> が浸水するおそれがあります',
   'dash.areaNote': '出典: ハザードマップポータルサイト配信タイルの全域解析 (約63m格子)',
   'dash.bldgWait': '3D建物の読み込み待ちです。地図を表示したまましばらくお待ちください。',
-  'dash.bldgNoAttr': 'この3D都市モデルには建物単位の浸水ランク属性が含まれていないため、建物別統計は表示できません (面積統計をご利用ください)。',
-  'dash.bldgHead': '読み込み済み <b>{total}棟</b> のうち <b>{atRisk}棟</b> に浸水想定、うち <b class="dash-danger">{vert}棟</b> は3m以上の浸水想定かつ2階建て以下 (垂直避難が困難)',
-  'dash.bldgNote': 'カメラで表示した範囲の建物から漸進的に集計されます。建物属性 (浸水ランク・階数) はPLATEAU CityGML由来です。',
+  'dash.bldgNoAttr':
+    'この3D都市モデルには建物単位の浸水ランク属性が含まれていないため、建物別統計は表示できません (面積統計をご利用ください)。',
+  'dash.bldgHead':
+    '読み込み済み <b>{total}棟</b> のうち <b>{atRisk}棟</b> に浸水想定、うち <b class="dash-danger">{vert}棟</b> は3m以上の浸水想定かつ2階建て以下 (垂直避難が困難)',
+  'dash.bldgNote':
+    'カメラで表示した範囲の建物から漸進的に集計されます。建物属性 (浸水ランク・階数) はPLATEAU CityGML由来です。',
   'dash.unitKm2': ' km²',
   'dash.unitBldg': '棟',
 
@@ -140,33 +149,43 @@ const ja = {
   'card.level5': '警戒レベル5<br>緊急安全確保',
   'card.action3': '高齢者・障害のある方・小さな子ども連れは避難を開始。それ以外の人も準備を始める',
   'card.action4': '全員が危険な場所から避難する',
-  'card.action5': 'すでに災害が発生・切迫。命を守る最善の行動を (避難が間に合わない場合は屋内のより安全な場所へ)',
+  'card.action5':
+    'すでに災害が発生・切迫。命を守る最善の行動を (避難が間に合わない場合は屋内のより安全な場所へ)',
   'card.sheltersTitle': '避難先 (近い順)',
   'card.mapNote': '★=この場所 / ①②=避難場所。点線は位置関係の目安で経路ではありません',
   'card.memoTitle': '家族メモ (書き込んで冷蔵庫などに貼っておきましょう)',
   'card.memoMeet': 'はぐれたときの集合場所',
   'card.memoContact': '連絡方法 (災害用伝言ダイヤル 171 など)',
-  'card.memoItems': '持ち出すもの: □水 □食料 □常備薬 □モバイルバッテリー □懐中電灯 □保険証のコピー □現金',
+  'card.memoItems':
+    '持ち出すもの: □水 □食料 □常備薬 □モバイルバッテリー □懐中電灯 □保険証のコピー □現金',
   'card.print': '印刷・PDF保存',
   'card.copyLink': 'この場所のリンクをコピー',
   'card.copied': 'リンクをコピーしました。家族に共有できます',
   'card.copyFailed': 'コピーできませんでした',
   'card.close': '閉じる',
-  'card.disclaimer': '出典: ハザードマップポータルサイト・Project PLATEAU (参考情報)。実際の避難は三郷町の避難情報に従ってください。',
+  'card.disclaimer':
+    '出典: ハザードマップポータルサイト・Project PLATEAU (参考情報)。実際の避難は三郷町の避難情報に従ってください。',
 
-  'policy.floodLeave': '浸水想定 {label}: 立退き避難が必要です。浸水が始まる前に避難場所へ移動してください',
-  'policy.floodVertical': '浸水想定 {label}: 早めの立退き避難が安全です。間に合わない場合は2階以上へ垂直避難',
-  'policy.floodShallow': '浸水想定 {label}: 床下浸水のおそれ。気象情報と周囲の低い土地に注意してください',
+  'policy.floodLeave':
+    '浸水想定 {label}: 立退き避難が必要です。浸水が始まる前に避難場所へ移動してください',
+  'policy.floodVertical':
+    '浸水想定 {label}: 早めの立退き避難が安全です。間に合わない場合は2階以上へ垂直避難',
+  'policy.floodShallow':
+    '浸水想定 {label}: 床下浸水のおそれ。気象情報と周囲の低い土地に注意してください',
   'policy.keizoku': '水が引くまで長時間かかる区域のため、自宅に留まる避難 (在宅避難) は危険です',
-  'policy.lsSpecial': '土砂災害特別警戒区域の可能性: 大雨のときは必ず早めに区域の外へ立退き避難してください',
+  'policy.lsSpecial':
+    '土砂災害特別警戒区域の可能性: 大雨のときは必ず早めに区域の外へ立退き避難してください',
   'policy.lsWarning': '土砂災害警戒区域の可能性: 警戒レベル3で早めに避難を開始してください',
-  'policy.kaokutoukai': '家屋倒壊等氾濫想定区域: 家が流失・倒壊するおそれがあるため、浸水深によらず必ず立退き避難してください',
-  'policy.none': 'この場所の想定リスクは低めです。それでも避難場所と経路を家族で確認しておきましょう',
+  'policy.kaokutoukai':
+    '家屋倒壊等氾濫想定区域: 家が流失・倒壊するおそれがあるため、浸水深によらず必ず立退き避難してください',
+  'policy.none':
+    'この場所の想定リスクは低めです。それでも避難場所と経路を家族で確認しておきましょう',
 
   'route.button': '🛡 危険区域を避けるルートを表示',
   'route.calc': '計算中…',
   'route.summary': '危険区域を考慮した徒歩ルート: 約{km}km・約{min}分',
-  'route.risky': '⚠️ うち約{m}mは浸水・土砂の想定区域内を通ります。災害時は通行できないおそれがあります',
+  'route.risky':
+    '⚠️ うち約{m}mは浸水・土砂の想定区域内を通ります。災害時は通行できないおそれがあります',
   'route.note': '青=想定区域外 / 赤点線=想定区域内。参考情報であり実際の通行可否は保証されません',
   'route.failed': 'この地点付近の道路データがないため計算できませんでした',
 
@@ -192,7 +211,8 @@ const easy = {
   'panel.buildings': '3Dの たてもの',
   'panel.photo': 'そら から の しゃしん',
   'panel.offline': 'でんぱ が ない とき の じゅんび',
-  'offline.desc': 'さいがい で でんぱ が つかえない とき の ために、まち の ちず を この けいたい に ほぞん できます。',
+  'offline.desc':
+    'さいがい で でんぱ が つかえない とき の ために、まち の ちず を この けいたい に ほぞん できます。',
   'offline.save': 'まち の データ を ほぞん する',
   'offline.none': 'まだ ほぞん して いません',
   'offline.done': 'ほぞん しました。でんぱ が なくても つかえます。',
@@ -207,11 +227,27 @@ const easy = {
   'hazards.jisuberi': 'じすべり',
   floodClasses: [
     { label: '0.5mより ひくい', advice: 'ゆか の した まで みず が くる かもしれません' },
-    { label: '0.5〜3.0m', advice: '1かい が みず に つかる かもしれません。2かい より うえ か、ひなんじょ へ にげて ください' },
-    { label: '3.0〜5.0m', advice: '2かい まで みず が くる かもしれません。はやく とおく へ にげて ください' },
-    { label: '5.0〜10.0m', advice: '3がい まで みず が くる かもしれません。はやく とおく へ にげて ください' },
-    { label: '10.0〜20.0m', advice: 'たてもの が ぜんぶ みず に つかる かもしれません。はやく とおく へ にげて ください' },
-    { label: '20.0mより たかい', advice: 'たてもの が ぜんぶ みず に つかる かもしれません。はやく とおく へ にげて ください' },
+    {
+      label: '0.5〜3.0m',
+      advice:
+        '1かい が みず に つかる かもしれません。2かい より うえ か、ひなんじょ へ にげて ください',
+    },
+    {
+      label: '3.0〜5.0m',
+      advice: '2かい まで みず が くる かもしれません。はやく とおく へ にげて ください',
+    },
+    {
+      label: '5.0〜10.0m',
+      advice: '3がい まで みず が くる かもしれません。はやく とおく へ にげて ください',
+    },
+    {
+      label: '10.0〜20.0m',
+      advice: 'たてもの が ぜんぶ みず に つかる かもしれません。はやく とおく へ にげて ください',
+    },
+    {
+      label: '20.0mより たかい',
+      advice: 'たてもの が ぜんぶ みず に つかる かもしれません。はやく とおく へ にげて ください',
+    },
   ],
   'flood.unknown': 'みず が くる かもしれません (たかさ は わかりません)',
   'flood.unknownAdvice': 'ひくい とち に き を つけて ください',
@@ -223,8 +259,10 @@ const easy = {
   'diag.floodSafe': 'ここ は こうずい で みず が こない と かんがえられて います',
   'diag.landslide': 'ここ は <b>{types}</b> の きけん が ある ばしょ かもしれません',
   'diag.landslideAdvice': 'おおあめ の とき は はやく はなれて ください',
-  'diag.landslideSpecial': 'ここ は <b>{types}</b> の きけん が とても たかい ばしょ かもしれません',
-  'diag.landslideSpecialAdvice': 'いえ が こわれる かもしれません。おおあめ の とき は かならず とおく へ にげて ください',
+  'diag.landslideSpecial':
+    'ここ は <b>{types}</b> の きけん が とても たかい ばしょ かもしれません',
+  'diag.landslideSpecialAdvice':
+    'いえ が こわれる かもしれません。おおあめ の とき は かならず とおく へ にげて ください',
   'diag.landslideSafe': 'ここ は どしゃさいがい の きけん が ある ばしょ では ありません',
   'diag.keizoku': 'みず が ながい あいだ ひかない かもしれません',
   'diag.kaokutoukai': 'ここ は <b>{types}</b> で いえ が こわれる かもしれない ばしょ です',
@@ -245,9 +283,11 @@ const easy = {
   'bldg.storeys': 'やく {n}かいだて',
   'bldg.fallback': 'たてもの',
   'bldg.rankLabel': 'この たてもの に くる みず の たかさ:',
-  'bldg.vertWarn': ' — 2かいだて より ひくい ので、うえ に にげられません。とおく へ にげて ください',
+  'bldg.vertWarn':
+    ' — 2かいだて より ひくい ので、うえ に にげられません。とおく へ にげて ください',
   'note.outside': '⚠️ ここ は 三郷町(さんごうちょう) の そと です。',
-  'note.source': 'これ は さんこう じょうほう です。ほんとう の さいがい は ちがう かもしれません。',
+  'note.source':
+    'これ は さんこう じょうほう です。ほんとう の さいがい は ちがう かもしれません。',
   'err.diag': 'しらべられません でした。でんぱ を たしかめて、もういちど ためして ください。',
   'err.search': 'さがせません でした。でんぱ を たしかめて ください。',
   'err.notFound': '「{q}」は みつかりません でした',
@@ -259,7 +299,8 @@ const easy = {
   'dash.bldgTitle': 'たてもの ごと の きけん',
   'dash.scanning': 'まち ぜんたい を しらべて います…',
   'dash.scanFailed': 'しらべられません でした。でんぱ を たしかめて ください。',
-  'dash.areaHead': 'おおきな こうずい で、まち の <b>やく{km2} km²</b> が みず に つかる かもしれません',
+  'dash.areaHead':
+    'おおきな こうずい で、まち の <b>やく{km2} km²</b> が みず に つかる かもしれません',
   'dash.bldgWait': 'たてもの を よみこんで います。すこし まって ください。',
   'hint.tap': 'ちず を タップ すると、その ばしょ の きけん と にげる ばしょ が わかります',
   dirs: ['きた', 'ほくとう', 'ひがし', 'なんとう', 'みなみ', 'なんせい', 'にし', 'ほくせい'],
@@ -277,28 +318,38 @@ const easy = {
   'card.level5': 'レベル5<br>いのち を まもる',
   'card.action3': 'おとしより・からだ の ふじゆう な ひと・ちいさい こども は にげはじめる',
   'card.action4': 'みんな あぶない ばしょ から にげる',
-  'card.action5': 'いのち を まもる こうどう を する (にげられない とき は たてもの の なか の たかい ところ へ)',
+  'card.action5':
+    'いのち を まもる こうどう を する (にげられない とき は たてもの の なか の たかい ところ へ)',
   'card.sheltersTitle': 'にげる ばしょ (ちかい じゅん)',
   'card.mapNote': '★=この ばしょ / ①②=にげる ばしょ。てんせん は みち では ありません',
   'card.memoTitle': 'かぞく の メモ (かいて はって おきましょう)',
   'card.memoMeet': 'はぐれた とき に あつまる ばしょ',
   'card.memoContact': 'れんらく の しかた (でんごん ダイヤル 171 など)',
-  'card.memoItems': 'もっていく もの: □みず □たべもの □くすり □バッテリー □かいちゅうでんとう □ほけんしょう の コピー □おかね',
+  'card.memoItems':
+    'もっていく もの: □みず □たべもの □くすり □バッテリー □かいちゅうでんとう □ほけんしょう の コピー □おかね',
   'card.print': 'いんさつ する',
   'card.copyLink': 'リンク を コピー',
   'card.copied': 'リンク を コピー しました',
   'card.copyFailed': 'コピー できません でした',
   'card.close': 'とじる',
-  'card.disclaimer': 'これ は さんこう じょうほう です。にげる とき は 三郷町(さんごうちょう) の おしらせ に したがって ください。',
+  'card.disclaimer':
+    'これ は さんこう じょうほう です。にげる とき は 三郷町(さんごうちょう) の おしらせ に したがって ください。',
 
-  'policy.floodLeave': 'みず が {label} まで くる かもしれません。みず が くる まえ に にげる ばしょ へ いって ください',
-  'policy.floodVertical': 'みず が {label} まで くる かもしれません。はやめ に にげて ください。まにあわない とき は 2かい より うえ へ',
-  'policy.floodShallow': 'みず が {label} だけ くる かもしれません (ゆか の した)。てんき の じょうほう に き を つけて ください',
+  'policy.floodLeave':
+    'みず が {label} まで くる かもしれません。みず が くる まえ に にげる ばしょ へ いって ください',
+  'policy.floodVertical':
+    'みず が {label} まで くる かもしれません。はやめ に にげて ください。まにあわない とき は 2かい より うえ へ',
+  'policy.floodShallow':
+    'みず が {label} だけ くる かもしれません (ゆか の した)。てんき の じょうほう に き を つけて ください',
   'policy.keizoku': 'みず が ながい あいだ ひきません。いえ に のこる の は あぶない です',
-  'policy.lsSpecial': 'どしゃさいがい の きけん が とても たかい ばしょ です。おおあめ の とき は かならず はやく にげて ください',
-  'policy.lsWarning': 'どしゃさいがい の きけん が ある ばしょ です。レベル3 で はやめ に にげて ください',
-  'policy.kaokutoukai': 'ここ は いえ が こわれる かもしれない ばしょ です。みず の たかさ に かんけいなく、かならず とおく へ にげて ください',
-  'policy.none': 'きけん は すくない ばしょ です。それでも にげる ばしょ を かぞく で たしかめて おきましょう',
+  'policy.lsSpecial':
+    'どしゃさいがい の きけん が とても たかい ばしょ です。おおあめ の とき は かならず はやく にげて ください',
+  'policy.lsWarning':
+    'どしゃさいがい の きけん が ある ばしょ です。レベル3 で はやめ に にげて ください',
+  'policy.kaokutoukai':
+    'ここ は いえ が こわれる かもしれない ばしょ です。みず の たかさ に かんけいなく、かならず とおく へ にげて ください',
+  'policy.none':
+    'きけん は すくない ばしょ です。それでも にげる ばしょ を かぞく で たしかめて おきましょう',
 
   'route.button': '🛡 あんぜんな みち を みる',
   'route.calc': 'けいさん して います…',
@@ -336,7 +387,8 @@ const en = {
   'panel.photo': 'Aerial photo',
   'panel.offline': 'Offline use',
   'panel.close': 'Close',
-  'offline.desc': 'Save the town map and hazard data to your device (10–20 MB) in case networks fail during a disaster. After saving, risk check and shelters work without a signal.',
+  'offline.desc':
+    'Save the town map and hazard data to your device (10–20 MB) in case networks fail during a disaster. After saving, risk check and shelters work without a signal.',
   'offline.save': 'Save town data to device',
   'offline.none': 'Not saved yet',
   'offline.saved': 'Saved: {date} ({count} tiles)',
@@ -373,11 +425,14 @@ const en = {
   'diag.landslide': 'May be within a landslide warning zone (<b>{types}</b>)',
   'diag.landslideAdvice': 'During heavy rain, evacuate away from this zone early',
   'diag.landslideSpecial': 'May be within a <b>special</b> landslide warning zone (<b>{types}</b>)',
-  'diag.landslideSpecialAdvice': 'Buildings here could be destroyed. Always evacuate away from this zone during heavy rain (reference estimate from tile colors)',
+  'diag.landslideSpecialAdvice':
+    'Buildings here could be destroyed. Always evacuate away from this zone during heavy rain (reference estimate from tile colors)',
   'diag.landslideSafe': '<b>Outside</b> landslide warning zones',
-  'diag.keizoku': 'Flood water may take a long time to recede here (see the "Flood duration" layer)',
+  'diag.keizoku':
+    'Flood water may take a long time to recede here (see the "Flood duration" layer)',
   'diag.kaokutoukai': 'May be within a building-collapse hazard zone (<b>{types}</b>)',
-  'diag.kaokutoukaiAdvice': 'Buildings here could be washed away or collapse. Evacuate away regardless of flood depth',
+  'diag.kaokutoukaiAdvice':
+    'Buildings here could be washed away or collapse. Evacuate away regardless of flood depth',
   'ls.hanran': 'strong flood flow',
   'ls.kagan': 'riverbank erosion',
   'ls.dosekiryu': 'debris flow',
@@ -399,7 +454,8 @@ const en = {
   'bldg.vertWarn': ' — 2 floors or lower: vertical evacuation is difficult',
   'bldg.noAttr': 'This city model has no per-building flood rank attributes',
   'note.outside': '⚠️ This point is outside Sango Town. Shown values are based on nationwide data.',
-  'note.source': 'Source: Hazard Map Portal Site (maximum assumed scale). For reference only; actual disasters may differ.',
+  'note.source':
+    'Source: Hazard Map Portal Site (maximum assumed scale). For reference only; actual disasters may differ.',
   'err.diag': 'Could not check this point. Please check your connection and retry.',
   'err.search': 'Search failed. Please check your connection.',
   'err.notFound': '"{q}" was not found',
@@ -414,9 +470,12 @@ const en = {
   'dash.areaHead': 'A maximum-scale flood could inundate about <b>{km2} km²</b> of the town',
   'dash.areaNote': 'Source: full-area analysis of Hazard Map Portal tiles (approx. 63 m grid)',
   'dash.bldgWait': 'Loading 3D buildings. Please keep the map open.',
-  'dash.bldgNoAttr': 'This city model has no per-building flood rank attributes, so building statistics are unavailable (see area statistics).',
-  'dash.bldgHead': 'Of <b>{total} buildings</b> loaded, <b>{atRisk}</b> are in flood zones; <b class="dash-danger">{vert}</b> expect ≥3 m flooding with ≤2 floors (vertical evacuation difficult)',
-  'dash.bldgNote': 'Counted progressively from buildings loaded in view. Attributes come from PLATEAU CityGML.',
+  'dash.bldgNoAttr':
+    'This city model has no per-building flood rank attributes, so building statistics are unavailable (see area statistics).',
+  'dash.bldgHead':
+    'Of <b>{total} buildings</b> loaded, <b>{atRisk}</b> are in flood zones; <b class="dash-danger">{vert}</b> expect ≥3 m flooding with ≤2 floors (vertical evacuation difficult)',
+  'dash.bldgNote':
+    'Counted progressively from buildings loaded in view. Attributes come from PLATEAU CityGML.',
   'dash.unitKm2': ' km²',
   'dash.unitBldg': '',
   'hint.tap': 'Tap the map to see disaster risk and the nearest evacuation site',
@@ -433,36 +492,49 @@ const en = {
   'card.level3': 'Level 3<br>Elderly evacuate',
   'card.level4': 'Level 4<br>Evacuation order',
   'card.level5': 'Level 5<br>Emergency safety',
-  'card.action3': 'Elderly people, people with disabilities and families with small children start evacuating; everyone else prepares',
+  'card.action3':
+    'Elderly people, people with disabilities and families with small children start evacuating; everyone else prepares',
   'card.action4': 'Everyone evacuates from dangerous areas',
-  'card.action5': 'A disaster is imminent or occurring. Take the best action to protect your life (if too late to evacuate, move to a safer place indoors)',
+  'card.action5':
+    'A disaster is imminent or occurring. Take the best action to protect your life (if too late to evacuate, move to a safer place indoors)',
   'card.sheltersTitle': 'Evacuation sites (nearest first)',
-  'card.mapNote': '★ = this location / ①② = evacuation sites. The dashed line shows direction, not a route',
+  'card.mapNote':
+    '★ = this location / ①② = evacuation sites. The dashed line shows direction, not a route',
   'card.memoTitle': 'Family memo (fill in and post it at home)',
   'card.memoMeet': 'Meeting point if separated',
   'card.memoContact': 'How to contact each other (Disaster message dial 171, etc.)',
-  'card.memoItems': 'Take with you: □water □food □medicine □power bank □flashlight □copy of insurance card □cash',
+  'card.memoItems':
+    'Take with you: □water □food □medicine □power bank □flashlight □copy of insurance card □cash',
   'card.print': 'Print / Save as PDF',
   'card.copyLink': 'Copy link to this location',
   'card.copied': 'Link copied — share it with your family',
   'card.copyFailed': 'Could not copy the link',
   'card.close': 'Close',
-  'card.disclaimer': 'Sources: Hazard Map Portal Site, Project PLATEAU (for reference). In an actual disaster, follow official information from Sango Town.',
+  'card.disclaimer':
+    'Sources: Hazard Map Portal Site, Project PLATEAU (for reference). In an actual disaster, follow official information from Sango Town.',
 
-  'policy.floodLeave': 'Expected flooding {label}: evacuation required. Move to an evacuation site before flooding starts',
-  'policy.floodVertical': 'Expected flooding {label}: evacuating early is safest. If too late, move above the 2nd floor',
-  'policy.floodShallow': 'Expected flooding {label}: possible below-floor flooding. Watch weather information',
+  'policy.floodLeave':
+    'Expected flooding {label}: evacuation required. Move to an evacuation site before flooding starts',
+  'policy.floodVertical':
+    'Expected flooding {label}: evacuating early is safest. If too late, move above the 2nd floor',
+  'policy.floodShallow':
+    'Expected flooding {label}: possible below-floor flooding. Watch weather information',
   'policy.keizoku': 'Flood water stays for a long time here — sheltering at home is dangerous',
-  'policy.lsSpecial': 'Possibly in a special landslide warning zone: always evacuate away early during heavy rain',
+  'policy.lsSpecial':
+    'Possibly in a special landslide warning zone: always evacuate away early during heavy rain',
   'policy.lsWarning': 'Possibly in a landslide warning zone: start evacuating at alert level 3',
-  'policy.kaokutoukai': 'Building-collapse hazard zone: houses may be washed away or collapse. Always evacuate away, regardless of flood depth',
-  'policy.none': 'Expected risk here is relatively low. Still, confirm evacuation sites and routes with your family',
+  'policy.kaokutoukai':
+    'Building-collapse hazard zone: houses may be washed away or collapse. Always evacuate away, regardless of flood depth',
+  'policy.none':
+    'Expected risk here is relatively low. Still, confirm evacuation sites and routes with your family',
 
   'route.button': '🛡 Show route avoiding hazard zones',
   'route.calc': 'Calculating…',
   'route.summary': 'Walking route considering hazard zones: about {km} km, {min} min',
-  'route.risky': '⚠️ About {m} m passes through expected flood/landslide zones and may be impassable during a disaster',
-  'route.note': 'Blue = outside hazard zones / red dashes = inside. Reference only; passability is not guaranteed',
+  'route.risky':
+    '⚠️ About {m} m passes through expected flood/landslide zones and may be impassable during a disaster',
+  'route.note':
+    'Blue = outside hazard zones / red dashes = inside. Reference only; passability is not guaranteed',
   'route.failed': 'No road network data near this point',
 
   'weather.active': 'Now in effect for Sango Town: {list}',
@@ -476,7 +548,9 @@ let current = 'ja';
 try {
   const saved = localStorage.getItem(LANG_KEY);
   if (saved && DICTS[saved]) current = saved;
-} catch { /* localStorage不可の環境では既定言語 */ }
+} catch {
+  /* localStorage不可の環境では既定言語 */
+}
 
 export const LANGS = [
   { code: 'ja', label: '日本語' },
@@ -484,7 +558,9 @@ export const LANGS = [
   { code: 'en', label: 'English' },
 ];
 
-export function currentLang() { return current; }
+export function currentLang() {
+  return current;
+}
 
 export function t(key, params = null) {
   const value = DICTS[current][key] ?? DICTS.ja[key] ?? key;
@@ -511,7 +587,11 @@ export function applyStatic(root = document) {
 export function setLang(lang) {
   if (!DICTS[lang]) return;
   current = lang;
-  try { localStorage.setItem(LANG_KEY, lang); } catch { /* 保存不可は無視 */ }
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    /* 保存不可は無視 */
+  }
   if (typeof document === 'undefined') return; // Node (テスト) ではDOM反映なし
   document.documentElement.lang = lang === 'en' ? 'en' : 'ja';
   applyStatic();

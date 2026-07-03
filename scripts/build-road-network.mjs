@@ -10,13 +10,17 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
 import {
-  distanceMeters, tileCoords, floodClassIndex, classifyLandslideZone,
+  distanceMeters,
+  tileCoords,
+  floodClassIndex,
+  classifyLandslideZone,
 } from '../src/lib/geomath.js';
 
 // 町域bbox (src/config.js の CITY_BBOX と同値。configはVite依存のため直接記述)
 const BBOX = { west: 135.65, south: 34.565, east: 135.73, north: 34.625 };
 const OVERPASS = process.env.OVERPASS_URL ?? 'https://overpass-api.de/api/interpreter';
-const FLOOD_URL = 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png';
+const FLOOD_URL =
+  'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png';
 const LS_URLS = [
   'https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png',
   'https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png',
@@ -26,9 +30,22 @@ const SAMPLE_ZOOM = 16;
 
 // 徒歩避難に使える道路種別
 const WALKABLE = [
-  'residential', 'unclassified', 'tertiary', 'tertiary_link', 'secondary',
-  'secondary_link', 'primary', 'primary_link', 'service', 'living_street',
-  'footway', 'path', 'pedestrian', 'track', 'steps', 'cycleway',
+  'residential',
+  'unclassified',
+  'tertiary',
+  'tertiary_link',
+  'secondary',
+  'secondary_link',
+  'primary',
+  'primary_link',
+  'service',
+  'living_street',
+  'footway',
+  'path',
+  'pedestrian',
+  'track',
+  'steps',
+  'cycleway',
 ];
 
 // ---- Overpass取得 ----
@@ -95,13 +112,16 @@ const tileCache = new Map();
 async function loadTile(urlTemplate, z, x, y) {
   const url = urlTemplate.replace('{z}', z).replace('{x}', x).replace('{y}', y);
   if (!tileCache.has(url)) {
-    tileCache.set(url, (async () => {
-      const res = await fetch(url).catch(() => null);
-      if (!res || res.status === 404) return null; // 区域なし
-      if (!res.ok) throw new Error(`タイル取得失敗 (HTTP ${res.status}) ${url}`);
-      const buf = Buffer.from(await res.arrayBuffer());
-      return PNG.sync.read(buf);
-    })());
+    tileCache.set(
+      url,
+      (async () => {
+        const res = await fetch(url).catch(() => null);
+        if (!res || res.status === 404) return null; // 区域なし
+        if (!res.ok) throw new Error(`タイル取得失敗 (HTTP ${res.status}) ${url}`);
+        const buf = Buffer.from(await res.arrayBuffer());
+        return PNG.sync.read(buf);
+      })(),
+    );
   }
   return tileCache.get(url);
 }
@@ -118,10 +138,7 @@ async function samplePixel(urlTemplate, lon, lat) {
 
 async function annotateEdge(nodes, edge) {
   const [a, b] = edge;
-  const mid = [
-    (nodes[a][0] + nodes[b][0]) / 2,
-    (nodes[a][1] + nodes[b][1]) / 2,
-  ];
+  const mid = [(nodes[a][0] + nodes[b][0]) / 2, (nodes[a][1] + nodes[b][1]) / 2];
   const flood = await samplePixel(FLOOD_URL, mid[0], mid[1]);
   const floodIdx = floodClassIndex(flood);
   let lsCode = 0;
@@ -161,9 +178,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     source: '© OpenStreetMap contributors (ODbL) / ハザード: 重ねるハザードマップ',
     bbox: BBOX,
-    nodes: nodes.map(([lon, lat]) => [
-      Math.round(lon * 1e6) / 1e6, Math.round(lat * 1e6) / 1e6,
-    ]),
+    nodes: nodes.map(([lon, lat]) => [Math.round(lon * 1e6) / 1e6, Math.round(lat * 1e6) / 1e6]),
     edges: annotated,
   };
   const dir = fileURLToPath(new URL('../public/data/', import.meta.url));

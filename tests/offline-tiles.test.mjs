@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  tileRange, enumerateTiles, fillTemplate, buildOfflineTileList,
+  tileRange,
+  enumerateTiles,
+  fillTemplate,
+  buildOfflineTileList,
 } from '../src/lib/offline-tiles.js';
 import { tileCoords } from '../src/lib/geomath.js';
 
@@ -32,7 +35,7 @@ test('enumerateTiles: 役場地点のタイルが含まれる', () => {
 test('fillTemplate: URLテンプレートを展開する', () => {
   assert.equal(
     fillTemplate('https://example.com/{z}/{x}/{y}.png', { z: 16, x: 57460, y: 25980 }),
-    'https://example.com/16/57460/25980.png'
+    'https://example.com/16/57460/25980.png',
   );
 });
 
@@ -41,8 +44,7 @@ test('buildOfflineTileList: ズームごとに全タイルを列挙し重複し�
     { url: 'https://a.example/{z}/{x}/{y}.png', zooms: [11, 12] },
     { url: 'https://b.example/{z}/{x}/{y}.png', zooms: [11] },
   ]);
-  const expected =
-    [...enumerateTiles(BBOX, 11)].length * 2 + [...enumerateTiles(BBOX, 12)].length;
+  const expected = [...enumerateTiles(BBOX, 11)].length * 2 + [...enumerateTiles(BBOX, 12)].length;
   assert.equal(urls.length, expected);
   assert.equal(new Set(urls).size, urls.length);
   assert.ok(urls.every((u) => !u.includes('{')));

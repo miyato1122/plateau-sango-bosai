@@ -16,10 +16,7 @@ export function* enumerateTiles(bbox, z) {
 }
 
 export function fillTemplate(template, { z, x, y }) {
-  return template
-    .replace('{z}', String(z))
-    .replace('{x}', String(x))
-    .replace('{y}', String(y));
+  return template.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y));
 }
 
 // オフライン保存対象のURL一覧を組み立てる。
