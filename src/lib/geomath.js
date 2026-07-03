@@ -3,11 +3,36 @@
 // 浸水深の公式凡例色 (重ねるハザードマップ標準)
 export const FLOOD_DEPTH_CLASSES = [
   { rgb: [247, 245, 169], label: '0.5m未満', advice: '床下浸水のおそれ', css: 'rgb(247,245,169)' },
-  { rgb: [255, 216, 192], label: '0.5〜3.0m', advice: '1階が水没するおそれ。2階以上か避難場所へ', css: 'rgb(255,216,192)' },
-  { rgb: [255, 183, 183], label: '3.0〜5.0m', advice: '2階まで水没するおそれ。早めの立退き避難を', css: 'rgb(255,183,183)' },
-  { rgb: [255, 145, 145], label: '5.0〜10.0m', advice: '3階以上まで水没するおそれ。立退き避難が必要', css: 'rgb(255,145,145)' },
-  { rgb: [242, 133, 201], label: '10.0〜20.0m', advice: '建物全体が水没するおそれ。立退き避難が必要', css: 'rgb(242,133,201)' },
-  { rgb: [220, 122, 220], label: '20.0m以上', advice: '建物全体が水没するおそれ。立退き避難が必要', css: 'rgb(220,122,220)' },
+  {
+    rgb: [255, 216, 192],
+    label: '0.5〜3.0m',
+    advice: '1階が水没するおそれ。2階以上か避難場所へ',
+    css: 'rgb(255,216,192)',
+  },
+  {
+    rgb: [255, 183, 183],
+    label: '3.0〜5.0m',
+    advice: '2階まで水没するおそれ。早めの立退き避難を',
+    css: 'rgb(255,183,183)',
+  },
+  {
+    rgb: [255, 145, 145],
+    label: '5.0〜10.0m',
+    advice: '3階以上まで水没するおそれ。立退き避難が必要',
+    css: 'rgb(255,145,145)',
+  },
+  {
+    rgb: [242, 133, 201],
+    label: '10.0〜20.0m',
+    advice: '建物全体が水没するおそれ。立退き避難が必要',
+    css: 'rgb(242,133,201)',
+  },
+  {
+    rgb: [220, 122, 220],
+    label: '20.0m以上',
+    advice: '建物全体が水没するおそれ。立退き避難が必要',
+    css: 'rgb(220,122,220)',
+  },
 ];
 
 // 経度緯度 → タイル座標とタイル内ピクセル位置 (Webメルカトル)
@@ -37,7 +62,11 @@ export function classifyFloodDepth(pixel, tolerance = 60) {
   }
   return best.d <= tolerance
     ? best.cls
-    : { label: '浸水想定あり (深さ不明)', advice: '周囲より低い土地に注意してください', css: '#9e9e9e' };
+    : {
+        label: '浸水想定あり (深さ不明)',
+        advice: '周囲より低い土地に注意してください',
+        css: '#9e9e9e',
+      };
 }
 
 // ハバーサイン距離 (m)
@@ -80,7 +109,8 @@ export function parseOfficialShelters(geojson) {
     const p = f.properties ?? {};
     const capacity = p['収容人数'];
     shelters.push({
-      lon, lat,
+      lon,
+      lat,
       name: p['名称'] ?? '避難施設',
       address: p['住所'] ?? '',
       kind: p['施設の種類'] ?? '',
@@ -185,9 +215,7 @@ export function classifyLandslideZone(pixel) {
 
 // Webメルカトルのピクセル解像度 (m/px)
 export function metersPerPixel(z, lat, tileSize = 256) {
-  return (
-    (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (2 ** z * tileSize)
-  );
+  return (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (2 ** z * tileSize);
 }
 
 // タイル座標 → 北西角の経度緯度
@@ -236,7 +264,7 @@ export function parseFloodRank(value) {
 // 3D Tilesの属性名一覧から浸水ランク・階数・高さの属性を推定する
 export function detectRiskProperties(names) {
   const rankCandidates = names.filter(
-    (n) => /(浸水|洪水|flood)/i.test(n) && /(ランク|rank|深)/i.test(n)
+    (n) => /(浸水|洪水|flood)/i.test(n) && /(ランク|rank|深)/i.test(n),
   );
   // 想定最大規模 (L2) を優先、計画規模のみの属性は後回し
   rankCandidates.sort((a, b) => {
@@ -267,7 +295,11 @@ export function estimateStoreys(storeysValue, heightValue) {
 export function deepFindFloodRank(value) {
   let obj = value;
   if (typeof obj === 'string') {
-    try { obj = JSON.parse(obj); } catch { return -1; }
+    try {
+      obj = JSON.parse(obj);
+    } catch {
+      return -1;
+    }
   }
   if (obj == null || typeof obj !== 'object') return -1;
   const hits = [];
@@ -300,12 +332,11 @@ export function deepFindFloodRank(value) {
   return -1;
 }
 
-
 // 建物リスク統計のアキュムレータ
 export function createBuildingStats() {
   return {
     total: 0,
-    byClass: new Array(FLOOD_DEPTH_CLASSES.length).fill(0),
+    byClass: Array.from({ length: FLOOD_DEPTH_CLASSES.length }).fill(0),
     noRisk: 0,
     verticalEvacuationRisk: 0, // 3m以上の浸水想定かつ2階建て以下
   };
@@ -326,10 +357,7 @@ export function accumulateBuilding(stats, classIdx, storeys) {
 // PLATEAUデータカタログから建築物3D Tilesを選ぶ (高LOD・テクスチャ優先)
 export function pickBuildingDatasets(datasets) {
   const bldg = datasets.filter(
-    (d) =>
-      d.type_en === 'bldg' &&
-      typeof d.url === 'string' &&
-      d.url.includes('tileset.json')
+    (d) => d.type_en === 'bldg' && typeof d.url === 'string' && d.url.includes('tileset.json'),
   );
   if (bldg.length === 0) return [];
   const score = (d) => Number.parseFloat(d.lod ?? '0') * 10 + (d.texture ? 1 : 0);
@@ -341,10 +369,7 @@ export function pickBuildingDatasets(datasets) {
 export function findGeoJsonDataset(datasets, typeEn) {
   return (
     datasets.find(
-      (d) =>
-        d.type_en === typeEn &&
-        typeof d.url === 'string' &&
-        /\.geojson(\?|$)/i.test(d.url)
+      (d) => d.type_en === typeEn && typeof d.url === 'string' && /\.geojson(\?|$)/i.test(d.url),
     ) ?? null
   );
 }

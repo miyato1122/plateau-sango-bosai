@@ -7,8 +7,9 @@ test('全言語の辞書キーが日本語辞書と一致する', () => {
   const jaKeys = Object.keys(DICTS.ja).sort();
   for (const lang of ['easy', 'en']) {
     assert.deepEqual(
-      Object.keys(DICTS[lang]).sort(), jaKeys,
-      `${lang} の辞書キーが ja と一致しない`
+      Object.keys(DICTS[lang]).sort(),
+      jaKeys,
+      `${lang} の辞書キーが ja と一致しない`,
     );
   }
 });
@@ -36,13 +37,17 @@ test('プレースホルダが言語間で一致する (訳漏れの検知)', ()
     if (typeof jaVal !== 'string') continue;
     for (const lang of ['easy', 'en']) {
       assert.deepEqual(
-        params(DICTS[lang][key]), params(jaVal),
-        `${lang}:${key} のプレースホルダが ja と異なる`
+        params(DICTS[lang][key]),
+        params(jaVal),
+        `${lang}:${key} のプレースホルダが ja と異なる`,
       );
     }
   }
 });
 
 test('LANGS: 3言語が定義されている', () => {
-  assert.deepEqual(LANGS.map((l) => l.code), ['ja', 'easy', 'en']);
+  assert.deepEqual(
+    LANGS.map((l) => l.code),
+    ['ja', 'easy', 'en'],
+  );
 });

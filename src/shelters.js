@@ -10,7 +10,8 @@ export { nearestShelter, distanceMeters } from './lib/geomath.js';
 //   3. 国土地理院 指定緊急避難場所タイル (全国データ)
 export async function fetchShelters() {
   const fromCatalog = await fetchSheltersFromCatalog().catch(() => null);
-  if (fromCatalog?.length) return { shelters: fromCatalog, source: '三郷町公式データ (PLATEAU配信)' };
+  if (fromCatalog?.length)
+    return { shelters: fromCatalog, source: '三郷町公式データ (PLATEAU配信)' };
   const local = await fetchLocalShelters().catch(() => null);
   if (local?.length) return { shelters: local, source: '三郷町公式データ (同梱)' };
   const gsi = await fetchGsiShelters();
@@ -46,9 +47,7 @@ function* bboxTiles(bbox, z) {
   const lon2x = (lon) => Math.floor(((lon + 180) / 360) * 2 ** z);
   const lat2y = (lat) => {
     const rad = (lat * Math.PI) / 180;
-    return Math.floor(
-      ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * 2 ** z
-    );
+    return Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * 2 ** z);
   };
   for (let x = lon2x(bbox.west); x <= lon2x(bbox.east); x++) {
     for (let y = lat2y(bbox.north); y <= lat2y(bbox.south); y++) yield { x, y };
@@ -64,7 +63,7 @@ async function fetchGsiShelters() {
         fetch(`${SKHB_BASE}/${layer.id}/${TILE_Z}/${x}/${y}.geojson`)
           .then((r) => (r.ok ? r.json() : null))
           .then((geojson) => ({ layer, geojson }))
-          .catch(() => null)
+          .catch(() => null),
       );
     }
   }
@@ -74,14 +73,19 @@ async function fetchGsiShelters() {
       const [lon, lat] = f.geometry?.coordinates ?? [];
       if (lon == null) continue;
       if (
-        lon < CITY_BBOX.west || lon > CITY_BBOX.east ||
-        lat < CITY_BBOX.south || lat > CITY_BBOX.north
-      ) continue;
+        lon < CITY_BBOX.west ||
+        lon > CITY_BBOX.east ||
+        lat < CITY_BBOX.south ||
+        lat > CITY_BBOX.north
+      )
+        continue;
       const name = f.properties?.name ?? '避難場所';
       const key = `${lon.toFixed(6)},${lat.toFixed(6)},${name}`;
       if (!byKey.has(key)) {
         byKey.set(key, {
-          lon, lat, name,
+          lon,
+          lat,
+          name,
           address: f.properties?.address ?? '',
           kind: '指定緊急避難場所',
           capacity: null,

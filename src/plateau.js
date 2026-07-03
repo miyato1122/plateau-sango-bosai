@@ -22,7 +22,7 @@ export function fetchCityDatasets() {
     if (!res.ok) throw new Error(`データカタログAPIの取得に失敗 (HTTP ${res.status})`);
     const json = await res.json();
     const datasets = (json.datasets ?? []).filter(
-      (d) => d.city_code === CITY_CODE || d.ward_code === CITY_CODE
+      (d) => d.city_code === CITY_CODE || d.ward_code === CITY_CODE,
     );
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), datasets }));

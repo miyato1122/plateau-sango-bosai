@@ -42,8 +42,7 @@ export const PLATEAU_TERRAIN_CREDIT =
 
 // 地理院タイル
 export const GSI_PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
-export const GSI_PHOTO =
-  'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg';
+export const GSI_PHOTO = 'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg';
 export const GSI_DEM = 'https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png';
 
 // 地理院DEMは標高 (ジオイド基準)、Cesium/PLATEAUは楕円体高。

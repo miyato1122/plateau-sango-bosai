@@ -2,8 +2,13 @@ import * as Cesium from 'cesium';
 import { CITY_BBOX, GSI_DEM, GEOID_OFFSET } from './config.js';
 import { HAZARD_LAYERS } from './hazards.js';
 import {
-  tileCoords, tileToLonLat, metersPerPixel, floodClassIndex,
-  gsiDemDecode, DEPTH_REPRESENTATIVE, FLOOD_DEPTH_CLASSES,
+  tileCoords,
+  tileToLonLat,
+  metersPerPixel,
+  floodClassIndex,
+  gsiDemDecode,
+  DEPTH_REPRESENTATIVE,
+  FLOOD_DEPTH_CLASSES,
 } from './lib/geomath.js';
 
 // 洪水浸水想定タイルを町全域でスキャンし、
@@ -11,7 +16,7 @@ import {
 //   2. 63m格子の浸水セル (3D水柱表示用)
 // を作る。標高は地理院DEMタイル (PNG標高) をデコードして付与する。
 const FLOOD_Z = 15; // 3.9m/px
-const BLOCK = 16;   // 16px = 約63m格子
+const BLOCK = 16; // 16px = 約63m格子
 const DEM_Z = 14;
 
 function loadTileData(urlTemplate, z, x, y) {
@@ -43,9 +48,7 @@ async function buildElevationSampler(bbox) {
   const jobs = [];
   for (let x = x0; x <= x1; x++) {
     for (let y = y0; y <= y1; y++) {
-      jobs.push(
-        loadTileData(GSI_DEM, DEM_Z, x, y).then((d) => tiles.set(`${x}/${y}`, d))
-      );
+      jobs.push(loadTileData(GSI_DEM, DEM_Z, x, y).then((d) => tiles.set(`${x}/${y}`, d)));
     }
   }
   await Promise.all(jobs);
@@ -69,7 +72,7 @@ export function scanFloodGrid(onProgress) {
     const total = (x1 - x0 + 1) * (y1 - y0 + 1);
     let done = 0;
 
-    const areaPixels = new Array(FLOOD_DEPTH_CLASSES.length).fill(0);
+    const areaPixels = Array.from({ length: FLOOD_DEPTH_CLASSES.length }).fill(0);
     const cells = [];
     const cellDeg = 360 / 2 ** FLOOD_Z / (256 / BLOCK); // 経度方向のセル幅
 
@@ -105,7 +108,7 @@ export function scanFloodGrid(onProgress) {
                 }
               }
             }
-          })
+          }),
         );
       }
     }
@@ -116,7 +119,9 @@ export function scanFloodGrid(onProgress) {
     const areaKm2 = areaPixels.map((n) => (n * mpp * mpp) / 1e6);
     return { cells, areaKm2, totalKm2: areaKm2.reduce((a, b) => a + b, 0) };
   })();
-  scanPromise.catch(() => { scanPromise = null; });
+  scanPromise.catch(() => {
+    scanPromise = null;
+  });
   return scanPromise;
 }
 
@@ -147,10 +152,10 @@ export async function buildWaterColumns(viewer, onProgress) {
         }),
         attributes: {
           color: Cesium.ColorGeometryInstanceAttribute.fromColor(
-            Cesium.Color.fromCssColorString(WATER_COLORS[c.classIdx]).withAlpha(0.5)
+            Cesium.Color.fromCssColorString(WATER_COLORS[c.classIdx]).withAlpha(0.5),
           ),
         },
-      })
+      }),
     );
   }
   if (instances.length === 0) return null;
@@ -159,7 +164,7 @@ export async function buildWaterColumns(viewer, onProgress) {
       geometryInstances: instances,
       appearance: new Cesium.PerInstanceColorAppearance({ translucent: true, closed: true }),
       asynchronous: true,
-    })
+    }),
   );
   waterPrimitive.show = false;
   return waterPrimitive;

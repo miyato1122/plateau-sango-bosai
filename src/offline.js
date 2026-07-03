@@ -17,8 +17,7 @@ export function registerServiceWorker() {
   });
 }
 
-export const offlineSupported = () =>
-  'serviceWorker' in navigator && 'caches' in window;
+export const offlineSupported = () => 'serviceWorker' in navigator && 'caches' in window;
 
 export function offlineMeta() {
   try {

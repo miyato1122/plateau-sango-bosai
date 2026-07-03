@@ -52,6 +52,8 @@ npm run dev       # 開発サーバー
 npm test          # 単体テスト (タイル座標・色判定・距離計算・辞書整合性・実データ検証など)
 npm run build     # dist/ に静的ビルド
 npm run test:e2e  # PlaywrightによるE2Eスモーク (外部APIは全てモック、要ブラウザ)
+npm run lint      # oxlint (警告もエラー扱い)
+npm run fmt       # oxfmt でJSを整形 (CSS/HTMLは手調整のため対象外)
 ```
 
 ### 安全避難ルートの道路網データ生成 (任意・要インターネット接続)

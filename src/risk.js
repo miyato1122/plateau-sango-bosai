@@ -1,7 +1,12 @@
 import { HAZARD_LAYERS } from './hazards.js';
 import {
-  tileCoords, classifyFloodDepth, floodClassIndex, FLOOD_DEPTH_CLASSES,
-  sampleGrid, majorityClassIndex, classifyLandslideZone,
+  tileCoords,
+  classifyFloodDepth,
+  floodClassIndex,
+  FLOOD_DEPTH_CLASSES,
+  sampleGrid,
+  majorityClassIndex,
+  classifyLandslideZone,
 } from './lib/geomath.js';
 
 // ハザードタイルのピクセル色を直接読み取って地点リスクを判定する。
@@ -42,7 +47,7 @@ async function samplePixel(urlTemplate, lon, lat) {
 // 3×3サンプル (中心が先頭)。同じタイルはキャッシュされるため追加コストは小さい
 function samplePixels(urlTemplate, lon, lat) {
   return Promise.all(
-    sampleGrid(lon, lat, SAMPLE_ZOOM).map((p) => samplePixel(urlTemplate, p.lon, p.lat))
+    sampleGrid(lon, lat, SAMPLE_ZOOM).map((p) => samplePixel(urlTemplate, p.lon, p.lat)),
   );
 }
 
@@ -73,16 +78,15 @@ function presence(pixels) {
 // landslide の各値は null | 'warning' (警戒区域) | 'special' (特別警戒区域の可能性)
 // kaokutoukai は家屋倒壊等氾濫想定区域 (氾濫流/河岸侵食) の該当
 export async function diagnosePoint(lon, lat) {
-  const [flood, dosekiryu, kyukeisha, jisuberi, keizoku, hanran, kagan] =
-    await Promise.all([
-      samplePixels(HAZARD_LAYERS.flood.url, lon, lat),
-      samplePixels(HAZARD_LAYERS.dosekiryu.url, lon, lat),
-      samplePixels(HAZARD_LAYERS.kyukeisha.url, lon, lat),
-      samplePixels(HAZARD_LAYERS.jisuberi.url, lon, lat),
-      samplePixel(HAZARD_LAYERS.keizoku.url, lon, lat), // 継続時間は区域内かどうかのみ判定
-      samplePixels(HAZARD_LAYERS.kaokutoukai_hanran.url, lon, lat),
-      samplePixels(HAZARD_LAYERS.kaokutoukai_kagan.url, lon, lat),
-    ]);
+  const [flood, dosekiryu, kyukeisha, jisuberi, keizoku, hanran, kagan] = await Promise.all([
+    samplePixels(HAZARD_LAYERS.flood.url, lon, lat),
+    samplePixels(HAZARD_LAYERS.dosekiryu.url, lon, lat),
+    samplePixels(HAZARD_LAYERS.kyukeisha.url, lon, lat),
+    samplePixels(HAZARD_LAYERS.jisuberi.url, lon, lat),
+    samplePixel(HAZARD_LAYERS.keizoku.url, lon, lat), // 継続時間は区域内かどうかのみ判定
+    samplePixels(HAZARD_LAYERS.kaokutoukai_hanran.url, lon, lat),
+    samplePixels(HAZARD_LAYERS.kaokutoukai_kagan.url, lon, lat),
+  ]);
   return {
     flood: classifyFloodSamples(flood),
     keizoku: keizoku !== null,

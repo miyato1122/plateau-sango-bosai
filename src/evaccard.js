@@ -1,18 +1,24 @@
 // わが家の避難カード — 診断結果からA4印刷用カードを生成する。
 // 「一度見て終わり」の診断を、家に貼れる・家族で共有できる形に変える。
 import { GSI_PALE } from './config.js';
-import {
-  FLOOD_DEPTH_CLASSES, nearestShelters, compassIndex, tileCoords,
-} from './lib/geomath.js';
+import { FLOOD_DEPTH_CLASSES, nearestShelters, compassIndex } from './lib/geomath.js';
 import { evacuationPolicies } from './lib/evacplan.js';
 import { t, currentLang } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
 function escapeHtml(text) {
-  return String(text ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[c]);
+  return String(text ?? '').replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[c],
+  );
 }
 
 // 浸水深クラスの現在言語表記 (main.jsのfloodClassTextと同等の小ヘルパ)
@@ -62,8 +68,8 @@ async function drawMap(canvas, points) {
   for (; z > 11; z--) {
     const xs = points.map((p) => lonToPx(p.lon, z));
     const ys = points.map((p) => latToPx(p.lat, z));
-    if (Math.max(...xs) - Math.min(...xs) < W - 100 &&
-        Math.max(...ys) - Math.min(...ys) < H - 100) break;
+    if (Math.max(...xs) - Math.min(...xs) < W - 100 && Math.max(...ys) - Math.min(...ys) < H - 100)
+      break;
   }
   const cx = points.reduce((a, p) => a + lonToPx(p.lon, z), 0) / points.length;
   const cy = points.reduce((a, p) => a + latToPx(p.lat, z), 0) / points.length;
@@ -75,9 +81,11 @@ async function drawMap(canvas, points) {
   const jobs = [];
   for (let tx = t0.x; tx <= t1.x; tx++) {
     for (let ty = t0.y; ty <= t1.y; ty++) {
-      jobs.push(loadTile(z, tx, ty).then((img) => {
-        if (img) ctx.drawImage(img, tx * 256 - originX, ty * 256 - originY);
-      }));
+      jobs.push(
+        loadTile(z, tx, ty).then((img) => {
+          if (img) ctx.drawImage(img, tx * 256 - originX, ty * 256 - originY);
+        }),
+      );
     }
   }
   await Promise.all(jobs);
@@ -131,34 +139,40 @@ export async function openEvacCard(diag, shelters, toast) {
   // リスク要約行
   const riskRows = [];
   if (flood) {
-    riskRows.push(`<li>🌊 ${t('diag.flood', {
-      chip: `<span class="depth-chip" style="background:${flood.css}">${escapeHtml(flood.label)}</span>`,
-    })}</li>`);
+    riskRows.push(
+      `<li>🌊 ${t('diag.flood', {
+        chip: `<span class="depth-chip" style="background:${flood.css}">${escapeHtml(flood.label)}</span>`,
+      })}</li>`,
+    );
   } else {
     riskRows.push(`<li>🌊 ${t('diag.floodSafe')}</li>`);
   }
   if (risk.keizoku && flood) riskRows.push(`<li>⏳ ${t('diag.keizoku')}</li>`);
   const kk = risk.kaokutoukai ?? {};
-  const kkTypes = [
-    kk.hanran && t('ls.hanran'),
-    kk.kagan && t('ls.kagan'),
-  ].filter(Boolean);
+  const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(Boolean);
   if (kkTypes.length) {
-    riskRows.push(`<li>🏚️ ${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}</li>`);
+    riskRows.push(
+      `<li>🏚️ ${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}</li>`,
+    );
   }
   const ls = risk.landslide;
-  const typesOf = (zone) => [
-    ls.dosekiryu === zone && t('ls.dosekiryu'),
-    ls.kyukeisha === zone && t('ls.kyukeisha'),
-    ls.jisuberi === zone && t('ls.jisuberi'),
-  ].filter(Boolean);
+  const typesOf = (zone) =>
+    [
+      ls.dosekiryu === zone && t('ls.dosekiryu'),
+      ls.kyukeisha === zone && t('ls.kyukeisha'),
+      ls.jisuberi === zone && t('ls.jisuberi'),
+    ].filter(Boolean);
   const special = typesOf('special');
   const warning = typesOf('warning');
   if (special.length) {
-    riskRows.push(`<li>⛰️ ${t('diag.landslideSpecial', { types: special.map(escapeHtml).join(listSep()) })}</li>`);
+    riskRows.push(
+      `<li>⛰️ ${t('diag.landslideSpecial', { types: special.map(escapeHtml).join(listSep()) })}</li>`,
+    );
   }
   if (warning.length) {
-    riskRows.push(`<li>⛰️ ${t('diag.landslide', { types: warning.map(escapeHtml).join(listSep()) })}</li>`);
+    riskRows.push(
+      `<li>⛰️ ${t('diag.landslide', { types: warning.map(escapeHtml).join(listSep()) })}</li>`,
+    );
   }
   if (!special.length && !warning.length) riskRows.push(`<li>⛰️ ${t('diag.landslideSafe')}</li>`);
 
@@ -174,10 +188,11 @@ export async function openEvacCard(diag, shelters, toast) {
   // 避難先 (近い順2件)
   const filter = flood ? '洪水' : zone ? '土砂' : null;
   const nearest = nearestShelters(shelters, lon, lat, filter, 2);
-  const shelterRows = nearest.map(({ shelter: s, dist }, i) => {
-    const minutes = Math.max(1, Math.ceil(dist / 80));
-    const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)];
-    return `
+  const shelterRows = nearest
+    .map(({ shelter: s, dist }, i) => {
+      const minutes = Math.max(1, Math.ceil(dist / 80));
+      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)];
+      return `
       <div class="ec-shelter">
         <span class="ec-shelter-no">${i + 1}</span>
         <div>
@@ -186,12 +201,14 @@ export async function openEvacCard(diag, shelters, toast) {
           <div class="ec-meta">${escapeHtml(t('shelter.meta', { dir, dist: Math.round(dist), min: minutes }))}</div>
         </div>
       </div>`;
-  }).join('');
+    })
+    .join('');
 
   const now = new Date();
-  const dateStr = currentLang() === 'en'
-    ? now.toLocaleDateString('en-US')
-    : `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+  const dateStr =
+    currentLang() === 'en'
+      ? now.toLocaleDateString('en-US')
+      : `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
 
   const overlay = $('evacCard');
   overlay.innerHTML = `
@@ -251,7 +268,9 @@ export async function openEvacCard(diag, shelters, toast) {
   overlay.hidden = false;
 
   $('ecPrint').addEventListener('click', () => window.print());
-  $('ecClose').addEventListener('click', () => { overlay.hidden = true; });
+  $('ecClose').addEventListener('click', () => {
+    overlay.hidden = true;
+  });
   $('ecCopy').addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(shareUrl({ lat, lon, name: diag.name }));

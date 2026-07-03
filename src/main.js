@@ -1,8 +1,13 @@
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import {
-  HOME_VIEW, CITY_BBOX, GSI_PALE, GSI_PHOTO,
-  PLATEAU_TERRAIN_ION_ASSET, PLATEAU_ION_TOKEN, PLATEAU_TERRAIN_CREDIT,
+  HOME_VIEW,
+  CITY_BBOX,
+  GSI_PALE,
+  GSI_PHOTO,
+  PLATEAU_TERRAIN_ION_ASSET,
+  PLATEAU_ION_TOKEN,
+  PLATEAU_TERRAIN_CREDIT,
 } from './config.js';
 import { loadBuildingTilesets } from './plateau.js';
 import { GsiTerrainProvider } from './gsiterrain.js';
@@ -16,8 +21,11 @@ import { BuildingRiskAnalyzer } from './buildingrisk.js';
 import { buildWaterColumns } from './floodgrid.js';
 import { initDashboard } from './dashboard.js';
 import {
-  registerServiceWorker, offlineSupported, offlineMeta,
-  saveOfflineArea, watchOnlineState,
+  registerServiceWorker,
+  offlineSupported,
+  offlineMeta,
+  saveOfflineArea,
+  watchOnlineState,
 } from './offline.js';
 import { openEvacCard } from './evaccard.js';
 import { loadRoads, showSafeRoute, clearRoute } from './saferoute.js';
@@ -33,7 +41,9 @@ function toast(message, ms = 4000) {
   el.textContent = message;
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, ms);
+  toastTimer = setTimeout(() => {
+    el.hidden = true;
+  }, ms);
 }
 
 function setStatus(id, text, state = 'loading') {
@@ -49,9 +59,17 @@ function setStatus(id, text, state = 'loading') {
 }
 
 function escapeHtml(text) {
-  return String(text ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[c]);
+  return String(text ?? '').replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[c],
+  );
 }
 
 // ---- 言語 (標準日本語 / やさしい日本語 / English) ----
@@ -76,7 +94,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
       url: GSI_PALE,
       maximumLevel: 18,
       credit: new Cesium.Credit('地理院タイル'),
-    })
+    }),
   ),
   animation: false,
   timeline: false,
@@ -86,14 +104,12 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   sceneModePicker: false,
   navigationHelpButton: false,
   fullscreenButton: false,
-  infoBox: false,            // 生属性テーブルは出さず、独自カードで表示する
+  infoBox: false, // 生属性テーブルは出さず、独自カードで表示する
   selectionIndicator: false,
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
 // 既定のダブルクリック(エンティティへズーム)も無効化
-viewer.screenSpaceEventHandler.removeInputAction(
-  Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK
-);
+viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 function flyHome(duration = 1.2) {
   viewer.camera.flyTo({
@@ -136,9 +152,9 @@ let buildingTilesets = [];
 loadBuildingTilesets(viewer, (msg) => setStatus('bldg', `3D建物: ${msg}`))
   .then(({ tilesets }) => {
     buildingTilesets = tilesets;
-    for (const t of tilesets) {
-      t.show = $('layer-buildings').checked;
-      riskAnalyzer.attach(t);
+    for (const tileset of tilesets) {
+      tileset.show = $('layer-buildings').checked;
+      riskAnalyzer.attach(tileset);
     }
     setStatus('bldg', '3D建物: 読み込み完了', 'ok');
   })
@@ -147,7 +163,7 @@ loadBuildingTilesets(viewer, (msg) => setStatus('bldg', `3D建物: ${msg}`))
     setStatus('bldg', `3D建物: 読み込み失敗 — ${err.message}`, 'error');
   });
 $('layer-buildings').addEventListener('change', (e) => {
-  for (const t of buildingTilesets) t.show = e.target.checked;
+  for (const tileset of buildingTilesets) tileset.show = e.target.checked;
 });
 
 // ---- ハザードレイヤ (チップUI) ----
@@ -207,7 +223,7 @@ $('layer-photo').addEventListener('change', (e) => {
         maximumLevel: 18,
         credit: new Cesium.Credit('地理院タイル (写真)'),
       }),
-      1 // ベースの直上・ハザードの下
+      1, // ベースの直上・ハザードの下
     );
   } else if (photoLayer) {
     photoLayer.show = e.target.checked;
@@ -234,7 +250,10 @@ $('layer-shelters').addEventListener('change', (e) => {
 });
 
 // ---- 町データオーバーレイ (緊急輸送道路・町域界) ----
-for (const [key, noteId] of [['emergency_route', 'er-note'], ['border', 'border-note']]) {
+for (const [key, noteId] of [
+  ['emergency_route', 'er-note'],
+  ['border', 'border-note'],
+]) {
   const checkbox = $(`layer-${key}`);
   const note = $(noteId);
   loadCityOverlay(viewer, key)
@@ -245,16 +264,22 @@ for (const [key, noteId] of [['emergency_route', 'er-note'], ['border', 'border-
       }
       checkbox.disabled = false;
       note.textContent = '';
-      checkbox.addEventListener('change', (e) => { ds.show = e.target.checked; });
+      checkbox.addEventListener('change', (e) => {
+        ds.show = e.target.checked;
+      });
     })
-    .catch(() => { note.textContent = '(データ取得不可)'; });
+    .catch(() => {
+      note.textContent = '(データ取得不可)';
+    });
 }
 
 // ---- 建物リスク色分け ----
 $('layer-bldgrisk').addEventListener('change', (e) => {
   if (e.target.checked && !riskAnalyzer.hasRiskAttributes()) {
     $('bldgrisk-note').textContent =
-      riskAnalyzer.stats.total === 0 ? '(建物の読み込み待ち)' : '(この都市モデルに浸水ランク属性なし)';
+      riskAnalyzer.stats.total === 0
+        ? '(建物の読み込み待ち)'
+        : '(この都市モデルに浸水ランク属性なし)';
     if (riskAnalyzer.stats.total > 0) {
       // 属性が無い場合はチェックを戻す
       e.target.checked = false;
@@ -306,8 +331,12 @@ initDashboard(riskAnalyzer);
 
 // ---- パネル開閉 ----
 const panel = $('panel');
-$('fabLayers').addEventListener('click', () => { panel.hidden = !panel.hidden; });
-$('panelClose').addEventListener('click', () => { panel.hidden = true; });
+$('fabLayers').addEventListener('click', () => {
+  panel.hidden = !panel.hidden;
+});
+$('panelClose').addEventListener('click', () => {
+  panel.hidden = true;
+});
 if (window.matchMedia('(min-width: 641px)').matches) panel.hidden = false;
 
 // ---- アクセシビリティ: 文字サイズ切替・Escで閉じる ----
@@ -367,8 +396,10 @@ function showMarker(lon, lat) {
 }
 
 const inCity = (lon, lat) =>
-  lon >= CITY_BBOX.west && lon <= CITY_BBOX.east &&
-  lat >= CITY_BBOX.south && lat <= CITY_BBOX.north;
+  lon >= CITY_BBOX.west &&
+  lon <= CITY_BBOX.east &&
+  lat >= CITY_BBOX.south &&
+  lat <= CITY_BBOX.north;
 
 const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
 
@@ -428,10 +459,7 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
 
     // 家屋倒壊等氾濫想定区域 (浸水深によらず立退き避難が必要)
     const kk = risk.kaokutoukai ?? {};
-    const kkTypes = [
-      kk.hanran && t('ls.hanran'),
-      kk.kagan && t('ls.kagan'),
-    ].filter(Boolean);
+    const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(Boolean);
     if (kkTypes.length) {
       rows.push(`
         <div class="risk-row bad"><span class="icon">🏚️</span>
@@ -441,11 +469,12 @@ async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
 
     // 土砂災害: 特別警戒区域 (レッドゾーン) と警戒区域を分けて表示
     const ls = risk.landslide;
-    const typesOf = (zone) => [
-      ls.dosekiryu === zone && t('ls.dosekiryu'),
-      ls.kyukeisha === zone && t('ls.kyukeisha'),
-      ls.jisuberi === zone && t('ls.jisuberi'),
-    ].filter(Boolean);
+    const typesOf = (zone) =>
+      [
+        ls.dosekiryu === zone && t('ls.dosekiryu'),
+        ls.kyukeisha === zone && t('ls.kyukeisha'),
+        ls.jisuberi === zone && t('ls.jisuberi'),
+      ].filter(Boolean);
     const specialTypes = typesOf('special');
     const warningTypes = typesOf('warning');
     if (specialTypes.length) {
@@ -519,10 +548,12 @@ async function attachSafeRoute(lon, lat, shelter) {
         return;
       }
       track('safe_route');
-      const parts = [t('route.summary', {
-        km: (sum.lengthM / 1000).toFixed(1),
-        min: sum.minutes,
-      })];
+      const parts = [
+        t('route.summary', {
+          km: (sum.lengthM / 1000).toFixed(1),
+          min: sum.minutes,
+        }),
+      ];
       if (sum.riskyM > 0) parts.push(t('route.risky', { m: Math.round(sum.riskyM) }));
       parts.push(t('route.note'));
       note.textContent = parts.join(' ');
@@ -557,12 +588,16 @@ function buildingInfoRow(info) {
   if (info.height) parts.push(escapeHtml(t('bldg.height', { h: info.height.toFixed(1) })));
   if (info.storeys) parts.push(escapeHtml(t('bldg.storeys', { n: info.storeys })));
   if (parts.length === 0 && info.classIdx < 0) return '';
-  const rank = info.classIdx >= 0
-    ? `<div class="meta">${t('bldg.rankLabel')}
+  const rank =
+    info.classIdx >= 0
+      ? `<div class="meta">${t('bldg.rankLabel')}
         <span class="depth-chip" style="background:${FLOOD_DEPTH_CLASSES[info.classIdx].css}">${escapeHtml(t('floodClasses')[info.classIdx].label)}</span>
-        ${info.classIdx >= 2 && info.storeys != null && info.storeys <= 2
-          ? `<b class="dash-danger">${escapeHtml(t('bldg.vertWarn'))}</b>` : ''}</div>`
-    : '';
+        ${
+          info.classIdx >= 2 && info.storeys != null && info.storeys <= 2
+            ? `<b class="dash-danger">${escapeHtml(t('bldg.vertWarn'))}</b>`
+            : ''
+        }</div>`
+      : '';
   return `<div class="risk-row"><span class="icon">🏠</span>
     <div>${parts.join(listSep()) || t('bldg.fallback')}${rank}</div></div>`;
 }
@@ -617,7 +652,7 @@ $('fabLocate').addEventListener('click', () => {
       runDiagnosis(lon, lat, t('diag.current'));
     },
     () => toast(t('geo.failed')),
-    { enableHighAccuracy: true, timeout: 10000 }
+    { enableHighAccuracy: true, timeout: 10000 },
   );
 });
 
@@ -628,7 +663,7 @@ $('searchBar').addEventListener('submit', async (e) => {
   if (!q) return;
   const search = async (query) => {
     const res = await fetch(
-      `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`
+      `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`,
     );
     if (!res.ok) return [];
     return res.json();
@@ -665,11 +700,11 @@ function renderOfflineNote() {
     return;
   }
   const d = new Date(meta.savedAt);
-  const date = currentLang() === 'en'
-    ? `${d.getMonth() + 1}/${d.getDate()}`
-    : `${d.getMonth() + 1}月${d.getDate()}日`;
-  $('offline-note').textContent =
-    t('offline.saved', { date, count: meta.ok + meta.notFound });
+  const date =
+    currentLang() === 'en'
+      ? `${d.getMonth() + 1}/${d.getDate()}`
+      : `${d.getMonth() + 1}月${d.getDate()}日`;
+  $('offline-note').textContent = t('offline.saved', { date, count: meta.ok + meta.notFound });
 }
 
 const offlineSaveBtn = $('offlineSave');
