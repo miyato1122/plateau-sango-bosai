@@ -33,6 +33,9 @@ export interface DiagnosisRisk {
 // 判定は地点の周辺3×3サンプルの多数決で行い、区域境界・タイル境界での
 // 1ピクセル判定のブレを抑える (中心ヒットは常に採用 = 安全側)。
 const SAMPLE_ZOOM = 16;
+// タイル1枚はcanvasのピクセルデータ約256KBを保持するため、上限付きLRUで
+// 長時間の連続利用 (出前講座デモ等) でもメモリを ~24MB に抑える
+const TILE_CACHE_MAX = 96;
 const tileCache = new Map<string, Promise<CanvasRenderingContext2D | null>>();
 
 function loadTilePixels(
@@ -46,7 +49,12 @@ function loadTilePixels(
     .replace('{x}', String(x))
     .replace('{y}', String(y));
   const cached = tileCache.get(url);
-  if (cached) return cached;
+  if (cached) {
+    // 触れたエントリを末尾へ移して新しい扱いにする (Mapは挿入順を保持)
+    tileCache.delete(url);
+    tileCache.set(url, cached);
+    return cached;
+  }
   const promise = new Promise<CanvasRenderingContext2D | null>((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -65,6 +73,10 @@ function loadTilePixels(
     img.src = url;
   });
   tileCache.set(url, promise);
+  if (tileCache.size > TILE_CACHE_MAX) {
+    const oldest = tileCache.keys().next().value;
+    if (oldest) tileCache.delete(oldest);
+  }
   return promise;
 }
 

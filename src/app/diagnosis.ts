@@ -12,6 +12,7 @@ import { t } from '../i18n';
 import { openEvacCard } from '../evaccard';
 import { loadRoads, showSafeRoute, clearRoute } from '../saferoute';
 import { ctx } from './context';
+import { requestRender } from './viewer';
 import { $, toast, escapeHtml, listSep, isMobile, openDialog, closeDialog } from './ui';
 
 export function initDiagnosis() {
@@ -71,6 +72,7 @@ export function closeResultCard() {
   closeDialog($('resultCard'));
   if (ctx.marker) ctx.marker.show = false;
   clearRoute(ctx.viewer);
+  requestRender();
 }
 
 function showMarker(lon: number, lat: number) {
@@ -91,6 +93,7 @@ function showMarker(lon: number, lat: number) {
     Cesium.Cartesian3.fromDegrees(lon, lat),
   );
   ctx.marker!.show = true;
+  requestRender();
 }
 
 const inCity = (lon: number, lat: number) =>
@@ -117,6 +120,7 @@ export async function runDiagnosis(
 ) {
   showMarker(lon, lat);
   clearRoute(ctx.viewer);
+  requestRender();
   $('resultTitle').textContent = placeName ?? t('diag.title');
   $('resultBody').innerHTML = `<div class="loading-dots">${t('diag.loading')}</div>`;
   $('makeCardBtn').hidden = true;
@@ -255,7 +259,7 @@ async function attachSafeRoute(lon: number, lat: number, shelter: Shelter) {
       if (sum.riskyM > 0) parts.push(t('route.risky', { m: Math.round(sum.riskyM) }));
       parts.push(t('route.note'));
       note.textContent = parts.join(' ');
-      ctx.viewer.scene.requestRender?.();
+      requestRender();
     } catch (err) {
       console.error(err);
       note.textContent = t('route.failed');

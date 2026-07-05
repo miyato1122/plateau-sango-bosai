@@ -11,6 +11,7 @@ import { buildWaterColumns } from '../floodgrid';
 import { initDashboard } from '../dashboard';
 import { t } from '../i18n';
 import { ctx } from './context';
+import { requestRender } from './viewer';
 import { $, $input, toast, setStatus } from './ui';
 
 const isChecked = (e: Event) => (e.target as HTMLInputElement).checked;
@@ -37,6 +38,7 @@ function initBuildings() {
         tileset.show = $input('layer-buildings').checked;
         ctx.riskAnalyzer.attach(tileset);
       }
+      requestRender();
       setStatus('bldg', '3D建物: 読み込み完了', 'ok');
     })
     .catch((err) => {
@@ -46,6 +48,7 @@ function initBuildings() {
     });
   $('layer-buildings').addEventListener('change', (e) => {
     for (const tileset of ctx.buildingTilesets) tileset.show = isChecked(e);
+    requestRender();
   });
 }
 
@@ -69,6 +72,7 @@ function initHazardChips() {
       const on = chip.getAttribute('aria-pressed') !== 'true';
       chip.setAttribute('aria-pressed', String(on));
       hazardLayers[key].show = on;
+      requestRender();
     });
     chipsBox.appendChild(chip);
     if (key === 'flood') chip.click(); // 洪水は初期表示
@@ -76,6 +80,7 @@ function initHazardChips() {
   opacityInput.addEventListener('input', () => {
     const alpha = Number(opacityInput.value) / 100;
     for (const layer of Object.values(hazardLayers)) layer.alpha = alpha;
+    requestRender();
   });
 
   renderLegend();
@@ -118,6 +123,7 @@ function initPhotoLayer() {
     } else if (photoLayer) {
       photoLayer.show = isChecked(e);
     }
+    requestRender();
   });
 }
 
@@ -130,6 +136,7 @@ function initShelters() {
       ctx.shelters = list;
       shelterEntities = addShelterEntities(ctx.viewer, list);
       for (const ent of shelterEntities) ent.show = $input('layer-shelters').checked;
+      requestRender();
       setStatus('shelter', `避難場所: ${list.length}件 (${source})`, 'ok');
     })
     .catch((err) => {
@@ -138,6 +145,7 @@ function initShelters() {
     });
   $('layer-shelters').addEventListener('change', (e) => {
     for (const ent of shelterEntities) ent.show = isChecked(e);
+    requestRender();
   });
 }
 
@@ -160,6 +168,7 @@ function initCityOverlays() {
         note.textContent = '';
         checkbox.addEventListener('change', (e) => {
           ds.show = isChecked(e);
+          requestRender();
         });
       })
       .catch(() => {
@@ -188,7 +197,7 @@ function initBuildingRiskColoring() {
       $('bldgrisk-note').textContent = '';
     }
     analyzer.setColoring(ctx.buildingTilesets, target.checked);
-    ctx.viewer.scene.requestRender?.();
+    requestRender();
   });
 }
 
@@ -201,6 +210,7 @@ function initWater3d() {
     const note = $('water3d-note');
     if (waterPrimitive) {
       waterPrimitive.show = target.checked;
+      requestRender();
       return;
     }
     if (!target.checked || waterLoading) return;
@@ -217,6 +227,7 @@ function initWater3d() {
       }
       note.textContent = '';
       waterPrimitive.show = $input('layer-water3d').checked;
+      requestRender();
     } catch (err) {
       console.error(err);
       note.textContent = '(取得失敗)';

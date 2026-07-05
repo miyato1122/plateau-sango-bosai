@@ -33,6 +33,11 @@ export function initViewer(): Cesium.Viewer {
     fullscreenButton: false,
     infoBox: false, // 生属性テーブルは出さず、独自カードで表示する
     selectionIndicator: false,
+    // 地図はほぼ静的なので、変化があったときだけ描画してバッテリー消費を抑える。
+    // カメラ移動・タイル読込はCesiumが自動で再描画し、レイヤ表示切替などの
+    // 明示的な変更は requestRender() (下記) で通知する
+    requestRenderMode: true,
+    maximumRenderTimeChange: Infinity,
   });
   viewer.scene.globe.depthTestAgainstTerrain = true;
   // 既定のダブルクリック(エンティティへズーム)も無効化
@@ -43,6 +48,11 @@ export function initViewer(): Cesium.Viewer {
   $('fabHome').addEventListener('click', () => flyHome());
   setupTerrain();
   return viewer;
+}
+
+// requestRenderMode時にCesiumが自動検知しない変更 (レイヤ表示・エンティティ更新等) の後に呼ぶ
+export function requestRender(): void {
+  ctx.viewer.scene.requestRender();
 }
 
 export function flyHome(duration = 1.2): void {
@@ -82,5 +92,6 @@ async function setupTerrain() {
     }
   }
   ctx.viewer.terrainProvider = new GsiTerrainProvider();
+  requestRender();
   setStatus('terrain', '地形 (地理院標高タイル): 有効', 'ok');
 }
