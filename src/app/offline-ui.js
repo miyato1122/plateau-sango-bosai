@@ -7,7 +7,7 @@ import {
   watchOnlineState,
 } from '../offline.js';
 import { track } from '../lib/metrics';
-import { t, currentLang } from '../i18n.js';
+import { t, currentLang } from '../i18n';
 import { $, toast } from './ui.js';
 
 export function initOfflineUi() {

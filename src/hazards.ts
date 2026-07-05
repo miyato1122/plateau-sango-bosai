@@ -1,8 +1,24 @@
 import * as Cesium from 'cesium';
 export { FLOOD_DEPTH_CLASSES } from './lib/geomath';
 
+export interface HazardLayerDef {
+  label: string;
+  color: string;
+  url: string;
+  maxZoom: number;
+}
+
+export type HazardKey =
+  | 'flood'
+  | 'keizoku'
+  | 'kaokutoukai_hanran'
+  | 'kaokutoukai_kagan'
+  | 'dosekiryu'
+  | 'kyukeisha'
+  | 'jisuberi';
+
 // 重ねるハザードマップ (国土地理院 disaportal) の配信タイル
-export const HAZARD_LAYERS = {
+export const HAZARD_LAYERS: Record<HazardKey, HazardLayerDef> = {
   flood: {
     label: '洪水浸水想定',
     color: '#2196f3',
@@ -48,7 +64,11 @@ export const HAZARD_LAYERS = {
   },
 };
 
-export function createHazardLayer(viewer, key, alpha) {
+export function createHazardLayer(
+  viewer: Cesium.Viewer,
+  key: HazardKey,
+  alpha: number,
+): Cesium.ImageryLayer {
   const def = HAZARD_LAYERS[key];
   const provider = new Cesium.UrlTemplateImageryProvider({
     url: def.url,

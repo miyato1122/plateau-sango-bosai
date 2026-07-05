@@ -1,6 +1,6 @@
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { DICTS, t, setLang, LANGS } from '../src/i18n.js';
+import { DICTS, t, setLang, LANGS } from '../src/i18n';
 import { FLOOD_DEPTH_CLASSES } from '../src/lib/geomath';
 
 test('全言語の辞書キーが日本語辞書と一致する', () => {

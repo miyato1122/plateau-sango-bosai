@@ -1,7 +1,7 @@
 import { FLOOD_DEPTH_CLASSES } from './lib/geomath';
 import { RISK_COLORS } from './buildingrisk.js';
 import { scanFloodGrid } from './floodgrid.js';
-import { t } from './i18n.js';
+import { t } from './i18n';
 
 // 町全体統計ダッシュボード。
 //   - 浸水面積統計: ハザードタイル全域スキャン (町全体を常にカバー)

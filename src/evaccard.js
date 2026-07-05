@@ -1,9 +1,9 @@
 // わが家の避難カード — 診断結果からA4印刷用カードを生成する。
 // 「一度見て終わり」の診断を、家に貼れる・家族で共有できる形に変える。
-import { GSI_PALE } from './config.js';
+import { GSI_PALE } from './config';
 import { FLOOD_DEPTH_CLASSES, nearestShelters, compassIndex } from './lib/geomath';
 import { evacuationPolicies } from './lib/evacplan';
-import { t, currentLang } from './i18n.js';
+import { t, currentLang } from './i18n';
 
 const $ = (id) => document.getElementById(id);
 

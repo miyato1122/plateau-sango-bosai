@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
-import { CITY_BBOX, GSI_DEM, GEOID_OFFSET } from './config.js';
-import { HAZARD_LAYERS } from './hazards.js';
+import { CITY_BBOX, GSI_DEM, GEOID_OFFSET } from './config';
+import { HAZARD_LAYERS } from './hazards';
 import {
   tileCoords,
   tileToLonLat,
