@@ -9,6 +9,7 @@
   --radius: 16px;
   --shadow: 0 8px 30px rgb(2 24 43 / 0.18);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -40,7 +41,7 @@ html, body {
 
 /* ---- ブランド ---- */
 #brand {
-  position: absolute; top: 12px; left: 12px; z-index: 20;
+  position: absolute; top: calc(12px + var(--safe-top)); left: 12px; z-index: 20;
   display: flex; align-items: center; gap: 8px;
   padding: 8px 14px;
 }
@@ -50,7 +51,7 @@ html, body {
 
 /* ---- 検索 ---- */
 #searchBar {
-  position: absolute; top: 12px; right: 12px; z-index: 20;
+  position: absolute; top: calc(12px + var(--safe-top)); right: 12px; z-index: 20;
   display: flex; align-items: center;
   width: min(360px, calc(100vw - 24px));
   padding: 4px 4px 4px 14px;
@@ -256,7 +257,7 @@ html, body {
 /* ---- トースト ---- */
 #toast {
   position: absolute; z-index: 50; left: 50%; transform: translateX(-50%);
-  top: 72px;
+  top: calc(72px + var(--safe-top));
   background: rgb(15 23 42 / 0.92); color: #fff;
   padding: 10px 18px; border-radius: 22px;
   font-size: calc(13px * var(--fs, 1)); max-width: calc(100vw - 32px);
@@ -268,7 +269,7 @@ html, body {
 /* ---- 気象警報バナー ---- */
 #weatherBanner {
   position: absolute; z-index: 46; left: 50%; transform: translateX(-50%);
-  top: 12px;
+  top: calc(12px + var(--safe-top));
   color: #fff; text-decoration: none;
   padding: 9px 18px; border-radius: 20px;
   font-size: calc(12.5px * var(--fs, 1)); font-weight: 700;
@@ -283,12 +284,12 @@ html, body {
 }
 @keyframes pulse-banner { 50% { box-shadow: 0 0 0 6px rgb(109 40 217 / 0.35); } }
 /* 気象バナーとオフラインバッジの重なり回避 */
-#weatherBanner:not([hidden]) ~ #offlineBadge { top: 56px; }
+#weatherBanner:not([hidden]) ~ #offlineBadge { top: calc(56px + var(--safe-top)); }
 
 /* ---- オフライン ---- */
 #offlineBadge {
   position: absolute; z-index: 45; left: 50%; transform: translateX(-50%);
-  top: 12px;
+  top: calc(12px + var(--safe-top));
   background: rgb(146 64 14 / 0.95); color: #fff;
   padding: 8px 16px; border-radius: 20px;
   font-size: calc(12px * var(--fs, 1)); font-weight: 600;
@@ -409,5 +410,9 @@ html, body {
     padding-bottom: calc(16px + var(--safe-bottom));
   }
   @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
-  #toast { top: 64px; }
+  #toast { top: calc(64px + var(--safe-top)); }
+  /* ブランド (上端左) と重ならないよう、バナー類はその下に積む */
+  #weatherBanner { top: calc(64px + var(--safe-top)); }
+  #offlineBadge { top: calc(64px + var(--safe-top)); }
+  #weatherBanner:not([hidden]) ~ #offlineBadge { top: calc(110px + var(--safe-top)); }
 }
