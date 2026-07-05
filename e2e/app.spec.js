@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockExternal } from './helpers.mjs';
 
 // 外部配信 (PLATEAUカタログ・地理院・ハザードタイル) を全てモックした
 // アプリのE2Eスモーク。検証すること:
@@ -11,75 +12,6 @@ import { test, expect } from '@playwright/test';
 // Service Workerはリクエストを横取りするとpage.routeのモックが効かなくなるため
 // このスイートでは無効化する (SW自体の検証は sw.spec.js)。
 test.use({ serviceWorkers: 'block' });
-
-// 洪水浸水想定タイル (0.5〜3.0mの凡例色 rgb(255,216,192) で塗り潰した256px PNG)
-let floodTilePng;
-
-test.beforeAll(async ({ browser }) => {
-  const page = await browser.newPage();
-  const dataUrl = await page.evaluate(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgb(255,216,192)';
-    ctx.fillRect(0, 0, 256, 256);
-    return canvas.toDataURL('image/png');
-  });
-  floodTilePng = Buffer.from(dataUrl.split(',')[1], 'base64');
-  await page.close();
-});
-
-async function mockExternal(page) {
-  // PLATEAUデータカタログ: 不通を再現 (同梱データへのフォールバックを検証)
-  await page.route('https://api.plateauview.mlit.go.jp/**', (route) => route.abort());
-  // crossOrigin付きの画像読込・fetchが通るようCORSヘッダを必ず返す
-  const cors = { 'access-control-allow-origin': '*' };
-  // 土砂3種は404 (=区域外)、洪水タイルは一色のモック。
-  // Playwrightは後から登録したルートを優先するため、汎用404を先に登録する。
-  await page.route('https://disaportaldata.gsi.go.jp/**', (route) =>
-    route.fulfill({ status: 404, headers: cors, body: '' }),
-  );
-  await page.route(
-    'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/**',
-    (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'image/png',
-        headers: cors,
-        body: floodTilePng,
-      }),
-  );
-  // 地理院タイル (ベースマップ・標高・skhb): 404で応答
-  await page.route('https://cyberjapandata.gsi.go.jp/**', (route) =>
-    route.fulfill({ status: 404, headers: cors, body: '' }),
-  );
-  // ジオコーダ: 勢野西の固定結果
-  await page.route('https://msearch.gsi.go.jp/**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      headers: cors,
-      body: JSON.stringify([
-        {
-          geometry: { coordinates: [135.694, 34.599] },
-          properties: { title: '奈良県生駒郡三郷町勢野西' },
-        },
-      ]),
-    }),
-  );
-  // 気象庁: 既定は「発表なし」
-  await page.route('https://www.jma.go.jp/**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      headers: cors,
-      body: JSON.stringify({ areaTypes: [] }),
-    }),
-  );
-  // Cesium Ion (地形) は不通に
-  await page.route('https://api.cesium.com/**', (route) => route.abort());
-  await page.route('https://assets.ion.cesium.com/**', (route) => route.abort());
-}
 
 test.beforeEach(async ({ page }) => {
   await mockExternal(page);

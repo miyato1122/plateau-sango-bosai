@@ -195,7 +195,8 @@ html, body {
 .risk-row.ok { background: color-mix(in srgb, var(--safe) 9%, #fff); }
 .risk-row .icon { font-size: calc(20px * var(--fs, 1)); line-height: 1.2; }
 .risk-row b { font-weight: 700; }
-.risk-row .advice { display: block; font-size: calc(12px * var(--fs, 1)); color: var(--ink-sub); margin-top: 2px; }
+/* 色付き背景 (リスク行) の上でも4.5:1を確保するためink-subより濃い色 */
+.risk-row .advice { display: block; font-size: calc(12px * var(--fs, 1)); color: #475569; margin-top: 2px; }
 .depth-chip {
   display: inline-block; padding: 1px 8px; border-radius: 10px;
   border: 1px solid rgb(0 0 0 / 0.15); font-weight: 700;
@@ -205,7 +206,7 @@ html, body {
 .shelter-row .meta { color: var(--ink-sub); margin: 2px 0 8px; }
 .route-link {
   display: inline-flex; align-items: center; gap: 6px;
-  background: var(--safe); color: #fff; text-decoration: none;
+  background: #15803d; /* 白文字と4.5:1を確保 (var(--safe)は3.3で不足) */ color: #fff; text-decoration: none;
   padding: 8px 14px; border-radius: 18px; font-size: calc(13px * var(--fs, 1)); font-weight: 600;
 }
 .result-note { font-size: calc(11px * var(--fs, 1)); color: var(--ink-sub); margin: 8px 0 0; }

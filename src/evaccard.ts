@@ -11,6 +11,7 @@ import {
 import { evacuationPolicies } from './lib/evacplan';
 import { t, currentLang, type MsgKey } from './i18n';
 import type { LastDiagnosis } from './app/context';
+import { openDialog, closeDialog, trapModal } from './app/ui';
 
 const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
 
@@ -237,7 +238,7 @@ export async function openEvacCard(
   const overlay = $('evacCard');
   overlay.innerHTML = `
     <div class="ec-sheet" role="document">
-      <header class="ec-head">
+      <header class="ec-head" role="presentation">
         <h1>🛡️ ${t('card.title')}</h1>
         <div class="ec-sub">${t('card.created')}: ${dateStr}｜さんごう防災3Dマップ</div>
       </header>
@@ -289,12 +290,16 @@ export async function openEvacCard(
       <button type="button" class="action-btn ec-secondary" id="ecCopy">🔗 ${t('card.copyLink')}</button>
       <button type="button" class="action-btn ec-secondary" id="ecClose">✕ ${t('card.close')}</button>
     </div>`;
-  overlay.hidden = false;
+  // 印刷用の全画面モーダル: フォーカスを閉じ込め、Escapeでも閉じられるようにする
+  openDialog(overlay, overlay.querySelector<HTMLElement>('#ecPrint'));
+  const untrap = trapModal(overlay, close);
+  function close() {
+    untrap();
+    closeDialog(overlay);
+  }
 
   $('ecPrint').addEventListener('click', () => window.print());
-  $('ecClose').addEventListener('click', () => {
-    overlay.hidden = true;
-  });
+  $('ecClose').addEventListener('click', close);
   $('ecCopy').addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(shareUrl({ lat, lon, name: diag.name }));
