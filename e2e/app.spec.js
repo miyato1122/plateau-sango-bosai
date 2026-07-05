@@ -152,6 +152,25 @@ test('気象警報バナー: 発表なし・取得不可のときは表示しな
   await expect(page.locator('#weatherBanner')).toBeHidden();
 });
 
+test('オフライン保存: 保存済みメタがあると削除ボタンが出て、確認後に削除される', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'sango-offline-meta',
+      JSON.stringify({ savedAt: Date.now(), ok: 100, notFound: 20, failed: 0, total: 121 }),
+    );
+  });
+  await page.goto('/');
+  const deleteBtn = page.locator('#offlineDelete');
+  await expect(deleteBtn).toBeVisible();
+  await expect(page.locator('#offline-note')).toContainText('保存済み');
+  page.on('dialog', (dialog) => dialog.accept());
+  await deleteBtn.click();
+  await expect(deleteBtn).toBeHidden();
+  await expect(page.locator('#offline-note')).toContainText('まだ保存されていません');
+});
+
 test('このアプリについて: パネルからリンクされ、プライバシーポリシーが表示される', async ({
   page,
 }) => {
