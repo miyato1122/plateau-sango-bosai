@@ -1,42 +1,19 @@
 // わが家の避難カード — 診断結果からA4印刷用カードを生成する。
 // 「一度見て終わり」の診断を、家に貼れる・家族で共有できる形に変える。
 import { GSI_PALE } from './config';
-import {
-  FLOOD_DEPTH_CLASSES,
-  nearestShelters,
-  compassIndex,
-  type FloodDepthInfo,
-  type Shelter,
-} from './lib/geomath';
+import { nearestShelters, compassIndex, type Shelter } from './lib/geomath';
 import { evacuationPolicies } from './lib/evacplan';
-import { t, currentLang, type MsgKey } from './i18n';
+import { t, currentLang } from './i18n';
 import type { LastDiagnosis } from './app/context';
-import { openDialog, closeDialog, trapModal } from './app/ui';
-
-const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
-
-function escapeHtml(text: unknown): string {
-  return String(text ?? '').replace(
-    /[&<>"']/g,
-    (c) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-      })[c as '&' | '<' | '>' | '"' | "'"],
-  );
-}
-
-// 浸水深クラスの現在言語表記 (app/diagnosis.tsのfloodClassTextと同等の小ヘルパ)
-function floodText(flood: FloodDepthInfo) {
-  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood as (typeof FLOOD_DEPTH_CLASSES)[number]);
-  if (idx >= 0) return { ...t('floodClasses')[idx]!, css: flood.css, idx };
-  return { label: t('flood.unknown'), advice: t('flood.unknownAdvice'), css: flood.css, idx: 1 };
-}
-
-const listSep = () => (currentLang() === 'en' ? ', ' : '・');
+import {
+  $,
+  escapeHtml,
+  listSep,
+  floodClassText,
+  openDialog,
+  closeDialog,
+  trapModal,
+} from './app/ui';
 
 // 共有リンク (?loc=lat,lon&name=…)。個人情報はサーバーへ送らずURLにのみ載る
 export function shareUrl({ lat, lon, name }: { lat: number; lon: number; name?: string | null }) {
@@ -156,7 +133,7 @@ export async function openEvacCard(
 ) {
   const { lon, lat, risk } = diag;
   const name = diag.name ?? t('card.pointFallback');
-  const flood = risk.flood ? floodText(risk.flood) : null;
+  const flood = risk.flood ? floodClassText(risk.flood) : null;
   const floodIdx = flood ? flood.idx : -1;
 
   // リスク要約行
@@ -208,7 +185,7 @@ export async function openEvacCard(
     keizoku: risk.keizoku,
     landslide: risk.landslide,
     kaokutoukai: kkTypes.length > 0,
-  }).map((key) => t(key as MsgKey, { label: flood?.label ?? '' }));
+  }).map((key) => t(key, { label: flood?.label ?? '' }));
 
   // 避難先 (近い順2件)
   const filter = flood ? '洪水' : zone ? '土砂' : null;

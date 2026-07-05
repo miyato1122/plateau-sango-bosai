@@ -2,12 +2,11 @@ import { FLOOD_DEPTH_CLASSES, type BuildingStats } from './lib/geomath';
 import { RISK_COLORS, type BuildingRiskAnalyzer } from './buildingrisk';
 import { scanFloodGrid, type FloodScanResult } from './floodgrid';
 import { t } from './i18n';
-import { openDialog, closeDialog } from './app/ui';
+import { $, openDialog, closeDialog } from './app/ui';
 
 // 町全体統計ダッシュボード。
 //   - 浸水面積統計: ハザードタイル全域スキャン (町全体を常にカバー)
 //   - 建物統計: 3D Tiles属性の漸進集計 (読み込み済み建物が対象)
-const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
 
 function bar(label: string, value: number, max: number, color: string, unit: string) {
   const pct = max > 0 ? Math.max(2, (value / max) * 100) : 0;

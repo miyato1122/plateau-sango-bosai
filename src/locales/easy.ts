@@ -1,0 +1,178 @@
+// UI文字列辞書: やさしい日本語 (在住外国人・子ども・高齢者向け。短い文 + ひらがな多め)。
+// jaを展開して上書きするため、翻訳しないキーは日本語のまま残る。
+import { ja } from './ja';
+
+export const easy: typeof ja = {
+  ...ja,
+  'search.placeholder': 'じゅうしょ を さがす',
+  'fab.locate': 'いま いる ばしょ を しらべる',
+  'panel.title': 'ちず の せってい',
+  'panel.display': 'がめん の せってい',
+  'panel.fontLarge': 'もじ を おおきく する',
+  'panel.hazard': 'さいがい の きけん',
+  'panel.opacity': 'いろ の こさ',
+  'panel.water3d': 'みず の たかさ を 3Dで みる',
+  'panel.bldgrisk': 'あぶない たてもの に いろ を つける',
+  'panel.facilities': 'ひなん の ばしょ・ちず',
+  'panel.shelters': 'ひなんじょ (にげる ばしょ)',
+  'panel.route': 'きんきゅう ゆそう どうろ',
+  'panel.border': 'まち の さかい',
+  'panel.buildings': '3Dの たてもの',
+  'panel.photo': 'そら から の しゃしん',
+  'panel.offline': 'でんぱ が ない とき の じゅんび',
+  'offline.desc':
+    'さいがい で でんぱ が つかえない とき の ために、まち の ちず を この けいたい に ほぞん できます。',
+  'offline.save': 'まち の データ を ほぞん する',
+  'offline.none': 'まだ ほぞん して いません',
+  'offline.done': 'ほぞん しました。でんぱ が なくても つかえます。',
+  'offline.badgeSaved': '📡 いま でんぱ が ありません — ほぞん した データ で つかえます',
+  'offline.badgeNone': '📡 いま でんぱ が ありません — データ が ないので みられません',
+  'offline.delete': 'ほぞん した データ を けす',
+  'offline.deleteConfirm': 'ほぞん した データ を けします。いいですか？',
+  'offline.deleted': 'データ を けしました',
+  'offline.usage': 'つかっている りょう: やく {mb}MB',
+  'hazards.flood': 'こうずい (おおみず)',
+  'hazards.keizoku': 'みず が ひかない じかん',
+  'hazards.kaokutoukai_hanran': 'いえ が こわれる (つよい ながれ)',
+  'hazards.kaokutoukai_kagan': 'いえ が こわれる (きし が くずれる)',
+  'hazards.dosekiryu': 'どせきりゅう (やま の みず と いし)',
+  'hazards.kyukeisha': 'がけくずれ',
+  'hazards.jisuberi': 'じすべり',
+  floodClasses: [
+    { label: '0.5mより ひくい', advice: 'ゆか の した まで みず が くる かもしれません' },
+    {
+      label: '0.5〜3.0m',
+      advice:
+        '1かい が みず に つかる かもしれません。2かい より うえ か、ひなんじょ へ にげて ください',
+    },
+    {
+      label: '3.0〜5.0m',
+      advice: '2かい まで みず が くる かもしれません。はやく とおく へ にげて ください',
+    },
+    {
+      label: '5.0〜10.0m',
+      advice: '3がい まで みず が くる かもしれません。はやく とおく へ にげて ください',
+    },
+    {
+      label: '10.0〜20.0m',
+      advice: 'たてもの が ぜんぶ みず に つかる かもしれません。はやく とおく へ にげて ください',
+    },
+    {
+      label: '20.0mより たかい',
+      advice: 'たてもの が ぜんぶ みず に つかる かもしれません。はやく とおく へ にげて ください',
+    },
+  ],
+  'flood.unknown': 'みず が くる かもしれません (たかさ は わかりません)',
+  'flood.unknownAdvice': 'ひくい とち に き を つけて ください',
+  'diag.title': 'この ばしょ の きけん',
+  'diag.building': 'この たてもの の きけん',
+  'diag.current': 'いま いる ばしょ の きけん',
+  'diag.loading': 'しらべて います…',
+  'diag.flood': 'こうずい で {chip} まで みず が くる かもしれません',
+  'diag.floodSafe': 'ここ は こうずい で みず が こない と かんがえられて います',
+  'diag.landslide': 'ここ は <b>{types}</b> の きけん が ある ばしょ かもしれません',
+  'diag.landslideAdvice': 'おおあめ の とき は はやく はなれて ください',
+  'diag.landslideSpecial':
+    'ここ は <b>{types}</b> の きけん が とても たかい ばしょ かもしれません',
+  'diag.landslideSpecialAdvice':
+    'いえ が こわれる かもしれません。おおあめ の とき は かならず とおく へ にげて ください',
+  'diag.landslideSafe': 'ここ は どしゃさいがい の きけん が ある ばしょ では ありません',
+  'diag.keizoku': 'みず が ながい あいだ ひかない かもしれません',
+  'diag.kaokutoukai': 'ここ は <b>{types}</b> で いえ が こわれる かもしれない ばしょ です',
+  'diag.kaokutoukaiAdvice': 'みず の たかさ に かんけいなく、とおく へ にげて ください',
+  'ls.hanran': 'つよい みず の ながれ',
+  'ls.kagan': 'きし の くずれ',
+  'ls.dosekiryu': 'どせきりゅう',
+  'ls.kyukeisha': 'がけくずれ',
+  'ls.jisuberi': 'じすべり',
+  'shelter.nearest': '🏃 いちばん ちかい ひなんじょ (にげる ばしょ)',
+  'shelter.meta': '{dir} へ やく{dist}m・あるいて やく{min}ぷん',
+  'shelter.route': 'みち を みる',
+  'shelter.info': 'ひなんじょ の じょうほう',
+  'shelter.capacity': '{n}にん まで はいれます',
+  'shelter.disasters': 'つかえる さいがい: {list}',
+  'shelter.noDisasters': 'きまって いません',
+  'bldg.height': 'たかさ {h}m',
+  'bldg.storeys': 'やく {n}かいだて',
+  'bldg.fallback': 'たてもの',
+  'bldg.rankLabel': 'この たてもの に くる みず の たかさ:',
+  'bldg.vertWarn':
+    ' — 2かいだて より ひくい ので、うえ に にげられません。とおく へ にげて ください',
+  'note.outside': '⚠️ ここ は 三郷町(さんごうちょう) の そと です。',
+  'note.source':
+    'これ は さんこう じょうほう です。ほんとう の さいがい は ちがう かもしれません。',
+  'err.diag': 'しらべられません でした。でんぱ を たしかめて、もういちど ためして ください。',
+  'err.search': 'さがせません でした。でんぱ を たしかめて ください。',
+  'err.notFound': '「{q}」は みつかりません でした',
+  'geo.getting': 'いま いる ばしょ を さがして います…',
+  'geo.failed': 'いま いる ばしょ が わかりません でした。いちじょうほう を ゆるして ください。',
+  'geo.unsupported': 'この けいたい では いま いる ばしょ を しらべられません',
+  'dash.title': '📊 まち ぜんたい の こうずい の きけん',
+  'dash.areaTitle': 'みず に つかる ひろさ',
+  'dash.bldgTitle': 'たてもの ごと の きけん',
+  'dash.scanning': 'まち ぜんたい を しらべて います…',
+  'dash.scanFailed': 'しらべられません でした。でんぱ を たしかめて ください。',
+  'dash.areaHead':
+    'おおきな こうずい で、まち の <b>やく{km2} km²</b> が みず に つかる かもしれません',
+  'dash.bldgWait': 'たてもの を よみこんで います。すこし まって ください。',
+  'hint.tap': 'ちず を タップ すると、その ばしょ の きけん と にげる ばしょ が わかります',
+  dirs: ['きた', 'ほくとう', 'ひがし', 'なんとう', 'みなみ', 'なんせい', 'にし', 'ほくせい'],
+
+  'card.button': '🖨 わたし の いえ の ひなん カード を つくる',
+  'card.title': 'わたし の いえ の ひなん カード',
+  'card.created': 'つくった ひ',
+  'card.place': 'ばしょ',
+  'card.pointFallback': 'ちず で えらんだ ばしょ',
+  'card.riskTitle': 'この ばしょ の きけん',
+  'card.policyTitle': 'にげかた',
+  'card.levelsTitle': 'けいかい レベル と すること',
+  'card.level3': 'レベル3<br>おとしより は ひなん',
+  'card.level4': 'レベル4<br>みんな ひなん',
+  'card.level5': 'レベル5<br>いのち を まもる',
+  'card.action3': 'おとしより・からだ の ふじゆう な ひと・ちいさい こども は にげはじめる',
+  'card.action4': 'みんな あぶない ばしょ から にげる',
+  'card.action5':
+    'いのち を まもる こうどう を する (にげられない とき は たてもの の なか の たかい ところ へ)',
+  'card.sheltersTitle': 'にげる ばしょ (ちかい じゅん)',
+  'card.mapNote': '★=この ばしょ / ①②=にげる ばしょ。てんせん は みち では ありません',
+  'card.memoTitle': 'かぞく の メモ (かいて はって おきましょう)',
+  'card.memoMeet': 'はぐれた とき に あつまる ばしょ',
+  'card.memoContact': 'れんらく の しかた (でんごん ダイヤル 171 など)',
+  'card.memoItems':
+    'もっていく もの: □みず □たべもの □くすり □バッテリー □かいちゅうでんとう □ほけんしょう の コピー □おかね',
+  'card.print': 'いんさつ する',
+  'card.copyLink': 'リンク を コピー',
+  'card.copied': 'リンク を コピー しました',
+  'card.copyFailed': 'コピー できません でした',
+  'card.close': 'とじる',
+  'card.disclaimer':
+    'これ は さんこう じょうほう です。にげる とき は 三郷町(さんごうちょう) の おしらせ に したがって ください。',
+
+  'policy.floodLeave':
+    'みず が {label} まで くる かもしれません。みず が くる まえ に にげる ばしょ へ いって ください',
+  'policy.floodVertical':
+    'みず が {label} まで くる かもしれません。はやめ に にげて ください。まにあわない とき は 2かい より うえ へ',
+  'policy.floodShallow':
+    'みず が {label} だけ くる かもしれません (ゆか の した)。てんき の じょうほう に き を つけて ください',
+  'policy.keizoku': 'みず が ながい あいだ ひきません。いえ に のこる の は あぶない です',
+  'policy.lsSpecial':
+    'どしゃさいがい の きけん が とても たかい ばしょ です。おおあめ の とき は かならず はやく にげて ください',
+  'policy.lsWarning':
+    'どしゃさいがい の きけん が ある ばしょ です。レベル3 で はやめ に にげて ください',
+  'policy.kaokutoukai':
+    'ここ は いえ が こわれる かもしれない ばしょ です。みず の たかさ に かんけいなく、かならず とおく へ にげて ください',
+  'policy.none':
+    'きけん は すくない ばしょ です。それでも にげる ばしょ を かぞく で たしかめて おきましょう',
+
+  'route.button': '🛡 あんぜんな みち を みる',
+  'route.calc': 'けいさん して います…',
+  'route.summary': 'あるいて やく{min}ぷん (やく{km}km) の みち です',
+  'route.risky': '⚠️ とちゅう の やく{m}m は あぶない ばしょ を とおります。き を つけて ください',
+  'route.note': 'あお = あんぜんな みち / あかい てんせん = あぶない かもしれない みち',
+  'route.failed': 'この ばしょ の みち の データ が ありません でした',
+
+  'weather.active': 'いま 三郷町(さんごうちょう) に {list} が でて います',
+  'weather.link': 'きしょうちょう の ページ を みる',
+
+  'app.updateReady': 'あたらしい バージョン が あります — タップ して こうしん',
+};

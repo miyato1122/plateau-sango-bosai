@@ -1,0 +1,17 @@
+{
+  // Service Worker専用の型検査設定。
+  // WebWorker libはメインのDOM libとグローバル定義が衝突するため別プロジェクトにする。
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "WebWorker"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
+    "types": []
+  },
+  "include": ["src/sw.ts"]
+}

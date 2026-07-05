@@ -1,5 +1,6 @@
-// 小さなUIユーティリティ (DOM取得・トースト・状態表示・エスケープ)
-import { currentLang } from '../i18n';
+// 小さなUIユーティリティ (DOM取得・トースト・状態表示・エスケープ・ダイアログ)
+import { t, currentLang } from '../i18n';
+import { FLOOD_DEPTH_CLASSES, type FloodDepthInfo } from '../lib/geomath';
 
 // idは index.html に静的に存在するものだけを渡す前提 (存在しない場合は実行時エラー)
 export const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
@@ -50,6 +51,17 @@ export function escapeHtml(text: unknown): string {
 export const listSep = () => (currentLang() === 'en' ? ', ' : '・');
 
 export const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
+
+// 浸水深クラスの現在言語での表記 (凡例色は公式色を維持)。
+// 凡例外の色は「深さ不明」とし、避難方針の計算では0.5〜3m相当 (idx=1) の安全側に倒す
+export function floodClassText(flood: FloodDepthInfo) {
+  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood as (typeof FLOOD_DEPTH_CLASSES)[number]);
+  if (idx >= 0) {
+    const cls = t('floodClasses')[idx]!;
+    return { label: cls.label, advice: cls.advice, css: flood.css, idx };
+  }
+  return { label: t('flood.unknown'), advice: t('flood.unknownAdvice'), css: flood.css, idx: 1 };
+}
 
 // ---- ダイアログのフォーカス管理 ----
 // スクリーンリーダー・キーボード利用者がカードの開閉に気づけるように、

@@ -5,7 +5,7 @@ import { CITY_BBOX } from '../config';
 import { FLOOD_DEPTH_CLASSES } from '../hazards';
 import { nearestShelter } from '../shelters';
 import { diagnosePoint } from '../risk';
-import { compassIndex, type FloodDepthInfo, type Shelter } from '../lib/geomath';
+import { compassIndex, type Shelter } from '../lib/geomath';
 import type { BuildingInfo } from '../buildingrisk';
 import { track } from '../lib/metrics';
 import { t } from '../i18n';
@@ -13,7 +13,16 @@ import { openEvacCard } from '../evaccard';
 import { loadRoads, showSafeRoute, clearRoute } from '../saferoute';
 import { ctx } from './context';
 import { requestRender } from './viewer';
-import { $, toast, escapeHtml, listSep, isMobile, openDialog, closeDialog } from './ui';
+import {
+  $,
+  toast,
+  escapeHtml,
+  listSep,
+  isMobile,
+  floodClassText,
+  openDialog,
+  closeDialog,
+} from './ui';
 
 export function initDiagnosis() {
   $('resultClose').addEventListener('click', closeResultCard);
@@ -101,16 +110,6 @@ const inCity = (lon: number, lat: number) =>
   lon <= CITY_BBOX.east &&
   lat >= CITY_BBOX.south &&
   lat <= CITY_BBOX.north;
-
-// 浸水深クラスの現在言語での表記 (凡例色は公式色を維持)
-function floodClassText(flood: FloodDepthInfo) {
-  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood as (typeof FLOOD_DEPTH_CLASSES)[number]);
-  if (idx >= 0) {
-    const cls = t('floodClasses')[idx]!;
-    return { label: cls.label, advice: cls.advice, css: flood.css };
-  }
-  return { label: t('flood.unknown'), advice: t('flood.unknownAdvice'), css: flood.css };
-}
 
 export async function runDiagnosis(
   lon: number,
