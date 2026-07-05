@@ -1,11 +1,11 @@
 // 表示設定 (言語・文字サイズ)・パネル開閉・キーボード操作
 import { t, setLang, currentLang, applyStatic, LANGS } from '../i18n';
-import { $, toast, isMobile } from './ui.js';
-import { closeResultCard } from './diagnosis.js';
+import { $, $input, toast, isMobile } from './ui';
+import { closeResultCard } from './diagnosis';
 
 // 言語セレクタとdata-i18n適用。チップ等がt()を使うため、他モジュールより先に呼ぶ
 export function initLanguage() {
-  const langSelect = $('langSelect');
+  const langSelect = $('langSelect') as HTMLSelectElement;
   for (const { code, label } of LANGS) {
     const opt = document.createElement('option');
     opt.value = code;
@@ -13,7 +13,9 @@ export function initLanguage() {
     langSelect.appendChild(opt);
   }
   langSelect.value = currentLang();
-  langSelect.addEventListener('change', () => setLang(langSelect.value));
+  langSelect.addEventListener('change', () =>
+    setLang(langSelect.value as Parameters<typeof setLang>[0]),
+  );
   applyStatic();
 }
 
@@ -39,8 +41,8 @@ function initPanel() {
 // ---- 文字サイズ切替 ----
 function initFontSize() {
   const FONT_KEY = 'sango-font-large';
-  const fontToggle = $('fontLarge');
-  const applyFontSize = (large) => {
+  const fontToggle = $input('fontLarge');
+  const applyFontSize = (large: boolean) => {
     document.body.classList.toggle('font-large', large);
     fontToggle.checked = large;
   };

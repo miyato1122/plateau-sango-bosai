@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vite-plugin-pwa/client"]
   },
   // 段階導入: .ts化したモジュールを検査対象にする (lib全部 + i18n/config/risk/hazards/weather)。
   // 残る .js (src/app のCesium UI接続層など) の .ts 化は最終段。

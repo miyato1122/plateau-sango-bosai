@@ -1,7 +1,7 @@
 import * as Cesium from 'cesium';
 import { CITY_BBOX } from './config';
-import { fetchCityDatasets } from './plateau.js';
-import { parseOfficialShelters, findGeoJsonDataset } from './lib/geomath';
+import { fetchCityDatasets } from './plateau';
+import { parseOfficialShelters, findGeoJsonDataset, type Shelter } from './lib/geomath';
 export { nearestShelter, distanceMeters } from './lib/geomath';
 
 // 避難施設の取得。優先順:
@@ -21,7 +21,7 @@ export async function fetchShelters() {
 async function fetchSheltersFromCatalog() {
   const datasets = await fetchCityDatasets();
   const ds = findGeoJsonDataset(datasets, 'shelter');
-  if (!ds) return null;
+  if (!ds?.url) return null;
   const res = await fetch(ds.url);
   if (!res.ok) return null;
   return parseOfficialShelters(await res.json());
@@ -43,9 +43,9 @@ const SKHB_LAYERS = [
 ];
 const TILE_Z = 10;
 
-function* bboxTiles(bbox, z) {
-  const lon2x = (lon) => Math.floor(((lon + 180) / 360) * 2 ** z);
-  const lat2y = (lat) => {
+function* bboxTiles(bbox: { west: number; south: number; east: number; north: number }, z: number) {
+  const lon2x = (lon: number) => Math.floor(((lon + 180) / 360) * 2 ** z);
+  const lat2y = (lat: number) => {
     const rad = (lat * Math.PI) / 180;
     return Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * 2 ** z);
   };
@@ -100,7 +100,7 @@ async function fetchGsiShelters() {
 }
 
 // ---- 表示 ----
-export function addShelterEntities(viewer, shelters) {
+export function addShelterEntities(viewer: Cesium.Viewer, shelters: Shelter[]): Cesium.Entity[] {
   const entities = [];
   for (const s of shelters) {
     const entity = viewer.entities.add({
@@ -127,14 +127,15 @@ export function addShelterEntities(viewer, shelters) {
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 6000),
       },
     });
-    entity.sangoShelter = s; // クリック時に独自カードで表示するための元データ
+    // クリック時に独自カードで表示するための元データ (Entityへの独自プロパティ)
+    (entity as Cesium.Entity & { sangoShelter: Shelter }).sangoShelter = s;
     entities.push(entity);
   }
   return entities;
 }
 
 // 緑のピン型アイコンをSVGで生成 (外部画像に依存しない)
-let iconUrl = null;
+let iconUrl: string | null = null;
 function shelterIcon() {
   if (iconUrl) return iconUrl;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="76" viewBox="0 0 60 76">

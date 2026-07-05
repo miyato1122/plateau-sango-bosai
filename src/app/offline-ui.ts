@@ -5,14 +5,14 @@ import {
   offlineMeta,
   saveOfflineArea,
   watchOnlineState,
-} from '../offline.js';
+} from '../offline';
 import { track } from '../lib/metrics';
 import { t, currentLang } from '../i18n';
-import { $, toast } from './ui.js';
+import { $, toast } from './ui';
 
 export function initOfflineUi() {
   registerServiceWorker((applyUpdate) => {
-    const banner = $('updateBanner');
+    const banner = $('updateBanner') as HTMLButtonElement;
     banner.textContent = `🔄 ${t('app.updateReady')}`;
     banner.hidden = false;
     banner.addEventListener('click', () => {
@@ -39,7 +39,7 @@ function renderOfflineNote() {
 }
 
 function initSaveButton() {
-  const offlineSaveBtn = $('offlineSave');
+  const offlineSaveBtn = $('offlineSave') as HTMLButtonElement;
   if (!offlineSupported()) {
     offlineSaveBtn.disabled = true;
     $('offline-note').textContent = t('offline.unsupported');
@@ -63,7 +63,7 @@ function initSaveButton() {
     } catch (err) {
       console.error(err);
       $('offline-note').textContent = t('offline.failed');
-      toast(err.message ?? t('offline.failed'));
+      toast(err instanceof Error ? err.message : t('offline.failed'));
     } finally {
       offlineSaveBtn.disabled = false;
     }

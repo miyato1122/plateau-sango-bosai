@@ -1,4 +1,10 @@
 import * as Cesium from 'cesium';
+import type {
+  Cesium3DTileset,
+  Cesium3DTileFeature,
+  Cesium3DTile,
+  Cesium3DTileContent,
+} from 'cesium';
 import {
   detectRiskProperties,
   parseFloodRank,
@@ -7,7 +13,27 @@ import {
   createBuildingStats,
   accumulateBuilding,
   FLOOD_DEPTH_CLASSES,
+  type BuildingStats,
 } from './lib/geomath';
+
+/** 検出した属性名 */
+interface RiskProps {
+  rank: string | null;
+  storeys: string | null;
+  height: string | null;
+}
+
+/** 建物クリック時の表示用情報 */
+export interface BuildingInfo {
+  usage: string | null;
+  height: number | null;
+  storeys: number | null;
+  classIdx: number;
+  lon: number;
+  lat: number;
+}
+
+type UpdateListener = (stats: BuildingStats, props: RiskProps | null) => void;
 
 // PLATEAU 3D Tilesの建物属性 (CityGML災害リスク属性) を読み取り、
 //   - 建物ごとの浸水リスク色分け
@@ -16,17 +42,15 @@ import {
 const RISK_COLORS = ['#fef9c3', '#fdba74', '#f87171', '#dc2626', '#a21caf', '#581c87'];
 
 export class BuildingRiskAnalyzer {
-  constructor() {
-    this.stats = createBuildingStats();
-    this.props = null; // 検出した属性名 {rank, storeys, height}
-    this.rankSource = null; // 'property' | 'attributes-json' | null
-    this.coloring = false;
-    this.seen = new Set(); // gml_idで重複集計を防ぐ
-    this.listeners = new Set(); // 統計更新の通知先
-  }
+  stats: BuildingStats = createBuildingStats();
+  props: RiskProps | null = null; // 検出した属性名
+  rankSource: 'property' | 'attributes-json' | null = null;
+  coloring = false;
+  seen = new Set<string>(); // gml_idで重複集計を防ぐ
+  listeners = new Set<UpdateListener>(); // 統計更新の通知先
 
-  attach(tileset) {
-    tileset.tileLoad.addEventListener((tile) => {
+  attach(tileset: Cesium3DTileset): void {
+    tileset.tileLoad.addEventListener((tile: Cesium3DTile) => {
       try {
         this.#processContent(tile.content);
       } catch (err) {
@@ -35,12 +59,12 @@ export class BuildingRiskAnalyzer {
     });
   }
 
-  onUpdate(fn) {
+  onUpdate(fn: UpdateListener): void {
     this.listeners.add(fn);
   }
 
   // 単一featureの浸水ランク添字。属性プロパティ → attributes JSON の順で探す。
-  classIndexOf(feature) {
+  classIndexOf(feature: Cesium3DTileFeature): number {
     if (this.props?.rank) {
       const idx = parseFloodRank(feature.getProperty(this.props.rank));
       if (idx >= 0) return idx;
@@ -52,14 +76,16 @@ export class BuildingRiskAnalyzer {
   }
 
   // 建物クリック時の表示用情報
-  describe(feature) {
+  describe(feature: Cesium3DTileFeature): BuildingInfo {
     const storeys = estimateStoreys(
       this.props?.storeys ? feature.getProperty(this.props.storeys) : null,
       this.props?.height ? feature.getProperty(this.props.height) : null,
     );
     const height = Number(this.props?.height ? feature.getProperty(this.props.height) : NaN);
     return {
-      usage: feature.getProperty('bldg:usage') ?? feature.getProperty('用途') ?? null,
+      usage: (feature.getProperty('bldg:usage') ?? feature.getProperty('用途') ?? null) as
+        | string
+        | null,
       height: Number.isFinite(height) ? height : null,
       storeys,
       classIdx: this.classIndexOf(feature),
@@ -68,7 +94,7 @@ export class BuildingRiskAnalyzer {
     };
   }
 
-  #processContent(content) {
+  #processContent(content: Cesium3DTileContent | undefined): void {
     if (!content?.featuresLength) return;
     let changed = false;
     for (let i = 0; i < content.featuresLength; i++) {
@@ -83,14 +109,16 @@ export class BuildingRiskAnalyzer {
           this.rankSource = 'attributes-json';
         }
       }
-      const id = feature.getProperty('gml_id') ?? feature.getProperty('gml:id') ?? null;
+      const id = (feature.getProperty('gml_id') ?? feature.getProperty('gml:id') ?? null) as
+        | string
+        | null;
       const classIdx = this.classIndexOf(feature);
 
       if (id === null || !this.seen.has(id)) {
         if (id !== null) this.seen.add(id);
         const storeys = estimateStoreys(
-          this.props.storeys ? feature.getProperty(this.props.storeys) : null,
-          this.props.height ? feature.getProperty(this.props.height) : null,
+          this.props?.storeys ? feature.getProperty(this.props.storeys) : null,
+          this.props?.height ? feature.getProperty(this.props.height) : null,
         );
         accumulateBuilding(this.stats, classIdx, storeys);
         changed = true;
@@ -102,7 +130,7 @@ export class BuildingRiskAnalyzer {
     }
   }
 
-  #applyColor(feature, classIdx) {
+  #applyColor(feature: Cesium3DTileFeature, classIdx: number): void {
     if (this.coloring && classIdx >= 0) {
       feature.color = Cesium.Color.fromCssColorString(RISK_COLORS[classIdx]);
     } else if (this.coloring) {
@@ -113,14 +141,14 @@ export class BuildingRiskAnalyzer {
   }
 
   // 色分けの切替。読み込み済みタイルにも遡って適用する。
-  setColoring(tilesets, on) {
+  setColoring(tilesets: Cesium3DTileset[], on: boolean): void {
     this.coloring = on;
     for (const tileset of tilesets) {
       if (tileset.root) this.#walkTiles(tileset.root); // 読み込み済みタイルへ遡って適用
     }
   }
 
-  #walkTiles(tile) {
+  #walkTiles(tile: Cesium3DTile): void {
     if (tile.content?.featuresLength) {
       for (let i = 0; i < tile.content.featuresLength; i++) {
         const feature = tile.content.getFeature(i);
@@ -130,7 +158,7 @@ export class BuildingRiskAnalyzer {
     for (const child of tile.children ?? []) this.#walkTiles(child);
   }
 
-  hasRiskAttributes() {
+  hasRiskAttributes(): boolean {
     return this.rankSource !== null;
   }
 }

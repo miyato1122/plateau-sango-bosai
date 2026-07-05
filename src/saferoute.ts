@@ -1,15 +1,15 @@
 // 安全避難ルートの表示 (道路網データがある場合のみ有効化)。
 // public/data/roads.json は scripts/build-road-network.mjs で生成する。
 import * as Cesium from 'cesium';
-import { buildGraph, findRoute } from './lib/route';
+import { buildGraph, findRoute, type RoadsData, type Adjacency } from './lib/route';
 import { parseRoadsData } from './lib/validate';
 
-let roadsPromise = null;
-let graph = null;
-let routeEntities = [];
+let roadsPromise: Promise<RoadsData | null> | null = null;
+let graph: Adjacency | null = null;
+let routeEntities: Cesium.Entity[] = [];
 
 // 道路網データの取得 (無ければnull = 機能は自動的に非表示)
-export function loadRoads() {
+export function loadRoads(): Promise<RoadsData | null> {
   roadsPromise ??= fetch('./data/roads.json')
     .then((res) => (res.ok ? res.json() : null))
     .then((raw) => {
@@ -22,14 +22,18 @@ export function loadRoads() {
   return roadsPromise;
 }
 
-export function clearRoute(viewer) {
+export function clearRoute(viewer: Cesium.Viewer): void {
   for (const ent of routeEntities) viewer.entities.remove(ent);
   routeEntities = [];
 }
 
 // from→to の安全ルートを計算して3D表示する。
 // 返り値: { lengthM, minutes, floodM, lsM } / 計算不能は null
-export async function showSafeRoute(viewer, from, to) {
+export async function showSafeRoute(
+  viewer: Cesium.Viewer,
+  from: { lon: number; lat: number },
+  to: { lon: number; lat: number },
+) {
   const data = await loadRoads();
   if (!data) return null;
   const route = findRoute(data, [from.lon, from.lat], [to.lon, to.lat], graph);

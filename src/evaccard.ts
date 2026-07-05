@@ -1,13 +1,20 @@
 // わが家の避難カード — 診断結果からA4印刷用カードを生成する。
 // 「一度見て終わり」の診断を、家に貼れる・家族で共有できる形に変える。
 import { GSI_PALE } from './config';
-import { FLOOD_DEPTH_CLASSES, nearestShelters, compassIndex } from './lib/geomath';
+import {
+  FLOOD_DEPTH_CLASSES,
+  nearestShelters,
+  compassIndex,
+  type FloodDepthInfo,
+  type Shelter,
+} from './lib/geomath';
 import { evacuationPolicies } from './lib/evacplan';
-import { t, currentLang } from './i18n';
+import { t, currentLang, type MsgKey } from './i18n';
+import type { LastDiagnosis } from './app/context';
 
-const $ = (id) => document.getElementById(id);
+const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
 
-function escapeHtml(text) {
+function escapeHtml(text: unknown): string {
   return String(text ?? '').replace(
     /[&<>"']/g,
     (c) =>
@@ -17,21 +24,21 @@ function escapeHtml(text) {
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;',
-      })[c],
+      })[c as '&' | '<' | '>' | '"' | "'"],
   );
 }
 
-// 浸水深クラスの現在言語表記 (main.jsのfloodClassTextと同等の小ヘルパ)
-function floodText(flood) {
-  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood);
-  if (idx >= 0) return { ...t('floodClasses')[idx], css: flood.css, idx };
+// 浸水深クラスの現在言語表記 (app/diagnosis.tsのfloodClassTextと同等の小ヘルパ)
+function floodText(flood: FloodDepthInfo) {
+  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood as (typeof FLOOD_DEPTH_CLASSES)[number]);
+  if (idx >= 0) return { ...t('floodClasses')[idx]!, css: flood.css, idx };
   return { label: t('flood.unknown'), advice: t('flood.unknownAdvice'), css: flood.css, idx: 1 };
 }
 
 const listSep = () => (currentLang() === 'en' ? ', ' : '・');
 
 // 共有リンク (?loc=lat,lon&name=…)。個人情報はサーバーへ送らずURLにのみ載る
-export function shareUrl({ lat, lon, name }) {
+export function shareUrl({ lat, lon, name }: { lat: number; lon: number; name?: string | null }) {
   const base = `${location.origin}${location.pathname}`;
   const q = new URLSearchParams({ loc: `${lat.toFixed(5)},${lon.toFixed(5)}` });
   if (name) q.set('name', name);
@@ -39,27 +46,35 @@ export function shareUrl({ lat, lon, name }) {
 }
 
 // ---- 簡易地図 (淡色地図タイル + 現在地・避難所マーカー) ----
-const worldPx = (z) => 256 * 2 ** z;
-const lonToPx = (lon, z) => ((lon + 180) / 360) * worldPx(z);
-function latToPx(lat, z) {
+interface Point {
+  lon: number;
+  lat: number;
+}
+
+const worldPx = (z: number) => 256 * 2 ** z;
+const lonToPx = (lon: number, z: number) => ((lon + 180) / 360) * worldPx(z);
+function latToPx(lat: number, z: number) {
   const rad = (lat * Math.PI) / 180;
   return ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * worldPx(z);
 }
 
-function loadTile(z, x, y) {
+function loadTile(z: number, x: number, y: number): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-    img.src = GSI_PALE.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+    img.src = GSI_PALE.replace('{z}', String(z))
+      .replace('{x}', String(x))
+      .replace('{y}', String(y));
   });
 }
 
-async function drawMap(canvas, points) {
+async function drawMap(canvas: HTMLCanvasElement, points: Point[]) {
   const W = canvas.width;
   const H = canvas.height;
   const ctx = canvas.getContext('2d');
+  if (!ctx || points.length === 0) return;
   ctx.fillStyle = '#e2e8f0';
   ctx.fillRect(0, 0, W, H);
 
@@ -78,7 +93,7 @@ async function drawMap(canvas, points) {
 
   const t0 = { x: Math.floor(originX / 256), y: Math.floor(originY / 256) };
   const t1 = { x: Math.floor((originX + W) / 256), y: Math.floor((originY + H) / 256) };
-  const jobs = [];
+  const jobs: Array<Promise<void>> = [];
   for (let tx = t0.x; tx <= t1.x; tx++) {
     for (let ty = t0.y; ty <= t1.y; ty++) {
       jobs.push(
@@ -90,20 +105,23 @@ async function drawMap(canvas, points) {
   }
   await Promise.all(jobs);
 
-  const toXY = (p) => [lonToPx(p.lon, z) - originX, latToPx(p.lat, z) - originY];
+  const toXY = (p: Point): [number, number] => [
+    lonToPx(p.lon, z) - originX,
+    latToPx(p.lat, z) - originY,
+  ];
   // 現在地→避難所の直線 (経路ではなく位置関係の目安)
   ctx.setLineDash([6, 5]);
   ctx.strokeStyle = '#0f6fb8';
   ctx.lineWidth = 2.5;
   for (const p of points.slice(1)) {
     ctx.beginPath();
-    ctx.moveTo(...toXY(points[0]));
+    ctx.moveTo(...toXY(points[0]!));
     ctx.lineTo(...toXY(p));
     ctx.stroke();
   }
   ctx.setLineDash([]);
   // マーカー
-  const mark = (p, color, label) => {
+  const mark = (p: Point, color: string, label: string) => {
     const [x, y] = toXY(p);
     ctx.beginPath();
     ctx.arc(x, y, 9, 0, Math.PI * 2);
@@ -119,7 +137,7 @@ async function drawMap(canvas, points) {
     ctx.fillText(label, x, y + 0.5);
   };
   points.slice(1).forEach((p, i) => mark(p, '#16a34a', String(i + 1)));
-  mark(points[0], '#f97316', '★');
+  mark(points[0]!, '#f97316', '★');
   // 出典表記
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'right';
@@ -130,14 +148,18 @@ async function drawMap(canvas, points) {
 
 // ---- カード生成 ----
 // diag: { lon, lat, name, risk } / shelters: 全避難所リスト
-export async function openEvacCard(diag, shelters, toast) {
+export async function openEvacCard(
+  diag: LastDiagnosis,
+  shelters: Shelter[],
+  toast?: (message: string) => void,
+) {
   const { lon, lat, risk } = diag;
   const name = diag.name ?? t('card.pointFallback');
   const flood = risk.flood ? floodText(risk.flood) : null;
   const floodIdx = flood ? flood.idx : -1;
 
   // リスク要約行
-  const riskRows = [];
+  const riskRows: string[] = [];
   if (flood) {
     riskRows.push(
       `<li>🌊 ${t('diag.flood', {
@@ -148,20 +170,22 @@ export async function openEvacCard(diag, shelters, toast) {
     riskRows.push(`<li>🌊 ${t('diag.floodSafe')}</li>`);
   }
   if (risk.keizoku && flood) riskRows.push(`<li>⏳ ${t('diag.keizoku')}</li>`);
-  const kk = risk.kaokutoukai ?? {};
-  const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(Boolean);
+  const kk = risk.kaokutoukai;
+  const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(
+    (v): v is string => Boolean(v),
+  );
   if (kkTypes.length) {
     riskRows.push(
       `<li>🏚️ ${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}</li>`,
     );
   }
   const ls = risk.landslide;
-  const typesOf = (zone) =>
+  const typesOf = (zone: 'special' | 'warning') =>
     [
       ls.dosekiryu === zone && t('ls.dosekiryu'),
       ls.kyukeisha === zone && t('ls.kyukeisha'),
       ls.jisuberi === zone && t('ls.jisuberi'),
-    ].filter(Boolean);
+    ].filter((v): v is string => Boolean(v));
   const special = typesOf('special');
   const warning = typesOf('warning');
   if (special.length) {
@@ -183,7 +207,7 @@ export async function openEvacCard(diag, shelters, toast) {
     keizoku: risk.keizoku,
     landslide: risk.landslide,
     kaokutoukai: kkTypes.length > 0,
-  }).map((key) => t(key, { label: flood?.label ?? '' }));
+  }).map((key) => t(key as MsgKey, { label: flood?.label ?? '' }));
 
   // 避難先 (近い順2件)
   const filter = flood ? '洪水' : zone ? '土砂' : null;
@@ -191,7 +215,7 @@ export async function openEvacCard(diag, shelters, toast) {
   const shelterRows = nearest
     .map(({ shelter: s, dist }, i) => {
       const minutes = Math.max(1, Math.ceil(dist / 80));
-      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)];
+      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)]!;
       return `
       <div class="ec-shelter">
         <span class="ec-shelter-no">${i + 1}</span>
@@ -281,5 +305,7 @@ export async function openEvacCard(diag, shelters, toast) {
   });
 
   // 地図は非同期に描画 (タイル不通でもマーカーは出す)
-  drawMap($('ecMap'), [{ lon, lat }, ...nearest.map((n) => n.shelter)]).catch(() => {});
+  drawMap($('ecMap') as HTMLCanvasElement, [{ lon, lat }, ...nearest.map((n) => n.shelter)]).catch(
+    () => {},
+  );
 }

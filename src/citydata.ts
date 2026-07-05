@@ -1,11 +1,18 @@
 import * as Cesium from 'cesium';
-import { fetchCityDatasets } from './plateau.js';
+import { fetchCityDatasets } from './plateau';
 import { findGeoJsonDataset } from './lib/geomath';
 import { isFeatureCollection } from './lib/validate';
 
 // 町データオーバーレイ (PLATEAU関連データセット)。
 // データカタログAPIで実行時にURLを解決し、なければ同梱ファイルを使う。
-const OVERLAYS = {
+export type OverlayKey = 'emergency_route' | 'border';
+interface OverlayDef {
+  typeEn: string;
+  localFile: string;
+  options: object;
+}
+
+const OVERLAYS: Record<OverlayKey, OverlayDef> = {
   emergency_route: {
     typeEn: 'emergency_route',
     localFile: './data/emergency_route.geojson',
@@ -27,14 +34,17 @@ const OVERLAYS = {
   },
 };
 
-export async function loadCityOverlay(viewer, key) {
+export async function loadCityOverlay(
+  viewer: Cesium.Viewer,
+  key: OverlayKey,
+): Promise<Cesium.GeoJsonDataSource | null> {
   const def = OVERLAYS[key];
-  let geojson = null;
+  let geojson: unknown = null;
 
   try {
     const datasets = await fetchCityDatasets();
     const ds = findGeoJsonDataset(datasets, def.typeEn);
-    if (ds) {
+    if (ds?.url) {
       const res = await fetch(ds.url);
       if (res.ok) {
         const json = await res.json();
