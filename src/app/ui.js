@@ -1,5 +1,5 @@
 // 小さなUIユーティリティ (DOM取得・トースト・状態表示・エスケープ)
-import { currentLang } from '../i18n.js';
+import { currentLang } from '../i18n';
 
 export const $ = (id) => document.getElementById(id);
 

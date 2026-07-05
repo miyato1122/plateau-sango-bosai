@@ -1,6 +1,6 @@
 // 気象警報バナー (三郷町に警報・注意報が発表中のときだけ表示)
-import { startWeatherWatch, JMA_PAGE_URL } from '../weather.js';
-import { t } from '../i18n.js';
+import { startWeatherWatch, JMA_PAGE_URL } from '../weather';
+import { t } from '../i18n';
 import { $, listSep } from './ui.js';
 
 export function initWeatherBanner() {

@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { evacuationPolicies } from '../src/lib/evacplan';
 import { nearestShelters } from '../src/lib/geomath';
-import { DICTS } from '../src/i18n.js';
+import { DICTS } from '../src/i18n';
 
 const LS_NONE = { dosekiryu: null, kyukeisha: null, jisuberi: null };
 

@@ -1,7 +1,7 @@
 // オフライン利用: Service Worker登録と「町内データを保存」機能。
 // 保存先キャッシュ名は public/sw.js と一致させること。
-import { CITY_BBOX, GSI_PALE, GSI_DEM } from './config.js';
-import { HAZARD_LAYERS } from './hazards.js';
+import { CITY_BBOX, GSI_PALE, GSI_DEM } from './config';
+import { HAZARD_LAYERS } from './hazards';
 import { buildOfflineTileList } from './lib/offline-tiles';
 import { registerSW } from 'virtual:pwa-register';
 

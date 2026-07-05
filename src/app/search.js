@@ -1,5 +1,5 @@
 // 現在地診断・住所検索 (地理院ジオコーダ)・共有リンク (?loc=) の処理
-import { t } from '../i18n.js';
+import { t } from '../i18n';
 import { $, toast } from './ui.js';
 import { flyToPoint } from './viewer.js';
 import { runDiagnosis } from './diagnosis.js';

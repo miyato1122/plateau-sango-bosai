@@ -6,7 +6,7 @@ import {
   PLATEAU_TERRAIN_ION_ASSET,
   PLATEAU_ION_TOKEN,
   PLATEAU_TERRAIN_CREDIT,
-} from '../config.js';
+} from '../config';
 import { GsiTerrainProvider } from '../gsiterrain.js';
 import { ctx } from './context.js';
 import { $, setStatus } from './ui.js';

@@ -1,15 +1,15 @@
 // レイヤ類の初期化: 3D建物・ハザードチップ・凡例・航空写真・避難所・
 // 町データオーバーレイ・建物リスク色分け・浸水3D水柱・統計ダッシュボード
 import * as Cesium from 'cesium';
-import { GSI_PHOTO } from '../config.js';
+import { GSI_PHOTO } from '../config';
 import { loadBuildingTilesets } from '../plateau.js';
-import { createHazardLayer, HAZARD_LAYERS, FLOOD_DEPTH_CLASSES } from '../hazards.js';
+import { createHazardLayer, HAZARD_LAYERS, FLOOD_DEPTH_CLASSES } from '../hazards';
 import { fetchShelters, addShelterEntities } from '../shelters.js';
 import { loadCityOverlay } from '../citydata.js';
 import { BuildingRiskAnalyzer } from '../buildingrisk.js';
 import { buildWaterColumns } from '../floodgrid.js';
 import { initDashboard } from '../dashboard.js';
-import { t } from '../i18n.js';
+import { t } from '../i18n';
 import { ctx } from './context.js';
 import { $, toast, setStatus } from './ui.js';
 

@@ -195,7 +195,7 @@ const ja = {
   'app.updateReady': 'アプリの新しいバージョンがあります — タップして更新',
 };
 
-const easy = {
+const easy: typeof ja = {
   ...ja,
   'search.placeholder': 'じゅうしょ を さがす',
   'fab.locate': 'いま いる ばしょ を しらべる',
@@ -366,7 +366,7 @@ const easy = {
   'app.updateReady': 'あたらしい バージョン が あります — タップ して こうしん',
 };
 
-const en = {
+const en: typeof ja = {
   ...ja,
   'brand.sub': 'Sango Town, Nara',
   'search.placeholder': 'Search address (e.g. Segonishi 1-chome)',
@@ -548,49 +548,66 @@ const en = {
 };
 
 // テストからも参照する (キー整合性の検証)
-export const DICTS = { ja, easy, en };
+export // 辞書の型: jaを正とし、easy/enはキー完全一致を型で強制する
+type Dict = typeof ja;
+/** t() に渡せる辞書キー (存在しないキーはTSコンパイルエラーになる) */
+export type MsgKey = keyof Dict;
+export type Lang = 'ja' | 'easy' | 'en';
+
+const DICTS: Record<Lang, Dict> = { ja, easy, en };
+export { DICTS }; // テストからも参照する (キー整合性の検証)
+
 const LANG_KEY = 'sango-lang';
-let current = 'ja';
+let current: Lang = 'ja';
 try {
-  const saved = localStorage.getItem(LANG_KEY);
+  const saved = localStorage.getItem(LANG_KEY) as Lang | null;
   if (saved && DICTS[saved]) current = saved;
 } catch {
   /* localStorage不可の環境では既定言語 */
 }
 
-export const LANGS = [
+export const LANGS: Array<{ code: Lang; label: string }> = [
   { code: 'ja', label: '日本語' },
   { code: 'easy', label: 'やさしいにほんご' },
   { code: 'en', label: 'English' },
 ];
 
-export function currentLang() {
+export function currentLang(): Lang {
   return current;
 }
 
-export function t(key, params = null) {
+// 現在言語の文言を返す。キーはコンパイル時に検査される (動的キーは as MsgKey で明示)。
+// 値が配列 (floodClasses / dirs) のキーはそのまま配列を返す。
+export function t<K extends MsgKey>(
+  key: K,
+  params: Record<string, unknown> | null = null,
+): Dict[K] {
   const value = DICTS[current][key] ?? DICTS.ja[key] ?? key;
-  if (typeof value !== 'string' || !params) return value;
-  return value.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? ''));
+  if (typeof value !== 'string' || !params) return value as Dict[K];
+  return value.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? '')) as Dict[K];
 }
+
+// 属性値の辞書キーは実行時にしか分からないため、文字列tとして解決する
+// (キーの実在は tests/i18n-usage.test.mjs が全HTML/JSを走査して検証する)
+const tByName = (key: string): string => String(t(key as MsgKey));
 
 // data-i18n属性を持つ静的要素へ現在言語を適用する
-export function applyStatic(root = document) {
-  for (const el of root.querySelectorAll('[data-i18n]')) {
-    el.textContent = t(el.dataset.i18n);
+export function applyStatic(root: ParentNode = document): void {
+  for (const el of root.querySelectorAll<HTMLElement>('[data-i18n]')) {
+    el.textContent = tByName(el.dataset.i18n ?? '');
   }
-  for (const el of root.querySelectorAll('[data-i18n-placeholder]')) {
-    el.placeholder = t(el.dataset.i18nPlaceholder);
+  for (const el of root.querySelectorAll<HTMLInputElement>('[data-i18n-placeholder]')) {
+    el.placeholder = tByName(el.dataset.i18nPlaceholder ?? '');
   }
-  for (const el of root.querySelectorAll('[data-i18n-aria]')) {
-    el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  for (const el of root.querySelectorAll<HTMLElement>('[data-i18n-aria]')) {
+    el.setAttribute('aria-label', tByName(el.dataset.i18nAria ?? ''));
   }
-  for (const el of root.querySelectorAll('[data-i18n-title]')) {
-    el.title = t(el.dataset.i18nTitle);
+  for (const el of root.querySelectorAll<HTMLElement>('[data-i18n-title]')) {
+    el.title = tByName(el.dataset.i18nTitle ?? '');
   }
 }
 
-export function setLang(lang) {
+export function setLang(lang: Lang): void {
   if (!DICTS[lang]) return;
   current = lang;
   try {

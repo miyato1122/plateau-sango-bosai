@@ -1,5 +1,5 @@
 // 表示設定 (言語・文字サイズ)・パネル開閉・キーボード操作
-import { t, setLang, currentLang, applyStatic, LANGS } from '../i18n.js';
+import { t, setLang, currentLang, applyStatic, LANGS } from '../i18n';
 import { $, toast, isMobile } from './ui.js';
 import { closeResultCard } from './diagnosis.js';
 

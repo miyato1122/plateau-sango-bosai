@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import { CITY_CODE, PLATEAU_DATASETS_API } from './config.js';
+import { CITY_CODE, PLATEAU_DATASETS_API } from './config';
 import { pickBuildingDatasets } from './lib/geomath';
 import { parseCatalogDatasets } from './lib/validate';
 

@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import { GSI_DEM, GEOID_OFFSET } from './config.js';
+import { GSI_DEM, GEOID_OFFSET } from './config';
 import { gsiDemDecode } from './lib/geomath';
 
 // 地理院標高タイル (dem_png) からCesium地形を生成するTerrainProvider。

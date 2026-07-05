@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import { CITY_BBOX } from './config.js';
+import { CITY_BBOX } from './config';
 import { fetchCityDatasets } from './plateau.js';
 import { parseOfficialShelters, findGeoJsonDataset } from './lib/geomath';
 export { nearestShelter, distanceMeters } from './lib/geomath';

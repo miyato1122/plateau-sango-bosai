@@ -1,13 +1,13 @@
 // 地点リスク診断: タップ/検索地点の診断カード表示・避難所カード・
 // 安全ルートボタン・わが家の避難カード起動
 import * as Cesium from 'cesium';
-import { CITY_BBOX } from '../config.js';
-import { FLOOD_DEPTH_CLASSES } from '../hazards.js';
+import { CITY_BBOX } from '../config';
+import { FLOOD_DEPTH_CLASSES } from '../hazards';
 import { nearestShelter } from '../shelters.js';
-import { diagnosePoint } from '../risk.js';
+import { diagnosePoint } from '../risk';
 import { compassIndex } from '../lib/geomath';
 import { track } from '../lib/metrics';
-import { t } from '../i18n.js';
+import { t } from '../i18n';
 import { openEvacCard } from '../evaccard.js';
 import { loadRoads, showSafeRoute, clearRoute } from '../saferoute.js';
 import { ctx } from './context.js';
