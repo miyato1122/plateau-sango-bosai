@@ -7,25 +7,37 @@
   <title>このアプリについて・プライバシーポリシー｜さんごう防災3Dマップ</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <style>
-    :root { color-scheme: light; }
+    :root {
+      color-scheme: light dark;
+      --page-bg: #f1f5f9; --paper: #fff; --ink: #1e293b; --ink-sub: #64748b;
+      --head: #0f3a5f; --head-line: #dbeafe; --link: #0f6fb8;
+      --box: #eff6ff; --line: #e2e8f0; --th: #f8fafc; --mark: #fef9c3;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page-bg: #020617; --paper: #0f172a; --ink: #e2e8f0; --ink-sub: #a3b2c2;
+        --head: #93c5fd; --head-line: #1e3a5f; --link: #7cc0ef;
+        --box: #172554; --line: #334155; --th: #1e293b; --mark: #713f12;
+      }
+    }
     body {
-      margin: 0; padding: 0; background: #f1f5f9; color: #1e293b;
+      margin: 0; padding: 0; background: var(--page-bg); color: var(--ink);
       font-family: "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif;
       line-height: 1.75;
     }
-    main { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; background: #fff; min-height: 100vh; }
-    h1 { font-size: 22px; color: #0f3a5f; margin: 8px 0 4px; }
-    h2 { font-size: 17px; color: #0f3a5f; border-bottom: 2px solid #dbeafe; padding-bottom: 4px; margin-top: 32px; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; background: var(--paper); min-height: 100vh; }
+    h1 { font-size: 22px; color: var(--head); margin: 8px 0 4px; }
+    h2 { font-size: 17px; color: var(--head); border-bottom: 2px solid var(--head-line); padding-bottom: 4px; margin-top: 32px; }
     h3 { font-size: 14.5px; margin-top: 20px; }
-    a { color: #0f6fb8; }
+    a { color: var(--link); }
     .back { display: inline-block; margin-bottom: 12px; font-size: 14px; text-decoration: none; }
-    .lead { color: #64748b; font-size: 13px; margin-top: 0; }
-    .box { background: #eff6ff; border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+    .lead { color: var(--ink-sub); font-size: 13px; margin-top: 0; }
+    .box { background: var(--box); border-radius: 10px; padding: 12px 16px; font-size: 14px; }
     table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
-    th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; vertical-align: top; }
-    th { background: #f8fafc; white-space: nowrap; }
-    .placeholder { background: #fef9c3; padding: 0 4px; border-radius: 4px; }
-    footer { margin-top: 40px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--th); white-space: nowrap; }
+    .placeholder { background: var(--mark); padding: 0 4px; border-radius: 4px; }
+    footer { margin-top: 40px; font-size: 12px; color: var(--ink-sub); border-top: 1px solid var(--line); padding-top: 12px; }
     @media (max-width: 480px) { main { padding: 16px 14px 48px; } }
   </style>
 </head>
