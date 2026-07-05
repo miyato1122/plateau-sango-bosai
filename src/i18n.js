@@ -191,6 +191,8 @@ const ja = {
 
   'weather.active': '三郷町に {list} が発表されています',
   'weather.link': '気象庁の情報を見る',
+
+  'app.updateReady': 'アプリの新しいバージョンがあります — タップして更新',
 };
 
 const easy = {
@@ -360,6 +362,8 @@ const easy = {
 
   'weather.active': 'いま 三郷町(さんごうちょう) に {list} が でて います',
   'weather.link': 'きしょうちょう の ページ を みる',
+
+  'app.updateReady': 'あたらしい バージョン が あります — タップ して こうしん',
 };
 
 const en = {
@@ -539,6 +543,8 @@ const en = {
 
   'weather.active': 'Now in effect for Sango Town: {list}',
   'weather.link': 'See JMA for details',
+
+  'app.updateReady': 'A new version is available — tap to update',
 };
 
 // テストからも参照する (キー整合性の検証)
