@@ -1,6 +1,6 @@
 // 表示設定 (言語・文字サイズ)・パネル開閉・キーボード操作
 import { t, setLang, currentLang, applyStatic, LANGS } from '../i18n';
-import { $, $input, toast, isMobile } from './ui';
+import { $, $input, toast, isMobile, openDialog, closeDialog } from './ui';
 import { closeResultCard } from './diagnosis';
 
 // 言語セレクタとdata-i18n適用。チップ等がt()を使うため、他モジュールより先に呼ぶ
@@ -30,11 +30,10 @@ export function initSettings() {
 function initPanel() {
   const panel = $('panel');
   $('fabLayers').addEventListener('click', () => {
-    panel.hidden = !panel.hidden;
+    if (panel.hidden) openDialog(panel, $('panelTitle'));
+    else closeDialog(panel);
   });
-  $('panelClose').addEventListener('click', () => {
-    panel.hidden = true;
-  });
+  $('panelClose').addEventListener('click', () => closeDialog(panel));
   if (window.matchMedia('(min-width: 641px)').matches) panel.hidden = false;
 }
 
@@ -57,15 +56,16 @@ function initFontSize() {
 function initKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if (!$('evacCard').hidden) return; // モーダルは自身のフォーカストラップが閉じる
     if (!$('resultCard').hidden) {
       closeResultCard();
       return;
     }
     if (!$('dashCard').hidden) {
-      $('dashCard').hidden = true;
+      closeDialog($('dashCard'));
       return;
     }
-    if (!$('panel').hidden && isMobile()) $('panel').hidden = true;
+    if (!$('panel').hidden && isMobile()) closeDialog($('panel'));
   });
 }
 

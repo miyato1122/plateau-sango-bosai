@@ -20,13 +20,13 @@
     aria-label="3D防災地図。地図をタップすると、その地点の災害リスクを診断します。キーボード操作の場合は住所検索をご利用ください"></div>
 
   <!-- ブランド -->
-  <div id="brand" class="glass">
+  <header id="brand" class="glass">
     <span class="brand-mark">🛡️</span>
     <span class="brand-text">さんごう防災3Dマップ<small data-i18n="brand.sub">奈良県三郷町</small></span>
-  </div>
+  </header>
 
   <!-- 住所検索 -->
-  <form id="searchBar" class="glass" autocomplete="off">
+  <form id="searchBar" class="glass" role="search" autocomplete="off">
     <input id="searchInput" type="search" inputmode="search"
       placeholder="住所で探す (例: 勢野西1丁目)" aria-label="住所検索"
       data-i18n-placeholder="search.placeholder" data-i18n-aria="search.label" />
@@ -121,7 +121,7 @@
 
   <!-- 町全体統計ダッシュボード -->
   <div id="dashCard" class="glass" role="dialog" aria-labelledby="dashTitle" hidden>
-    <header>
+    <header role="presentation">
       <h2 id="dashTitle" data-i18n="dash.title">📊 三郷町全体の浸水リスク統計</h2>
       <button id="dashClose" aria-label="閉じる" data-i18n-aria="panel.close">✕</button>
     </header>
@@ -137,7 +137,7 @@
 
   <!-- 診断結果カード -->
   <div id="resultCard" class="glass" role="dialog" aria-labelledby="resultTitle" hidden>
-    <header>
+    <header role="presentation">
       <h2 id="resultTitle" data-i18n="diag.title">この地点のリスク</h2>
       <button id="resultClose" aria-label="閉じる" data-i18n-aria="panel.close">✕</button>
     </header>
@@ -146,7 +146,7 @@
   </div>
 
   <!-- わが家の避難カード (印刷用オーバーレイ) -->
-  <div id="evacCard" role="dialog" aria-label="わが家の避難カード" hidden></div>
+  <div id="evacCard" role="dialog" aria-modal="true" aria-label="わが家の避難カード" hidden></div>
 
   <!-- アプリ更新バナー (新バージョン検知時のみ表示) -->
   <button type="button" id="updateBanner" hidden></button>

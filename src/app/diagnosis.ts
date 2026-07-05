@@ -12,7 +12,7 @@ import { t } from '../i18n';
 import { openEvacCard } from '../evaccard';
 import { loadRoads, showSafeRoute, clearRoute } from '../saferoute';
 import { ctx } from './context';
-import { $, toast, escapeHtml, listSep, isMobile } from './ui';
+import { $, toast, escapeHtml, listSep, isMobile, openDialog, closeDialog } from './ui';
 
 export function initDiagnosis() {
   $('resultClose').addEventListener('click', closeResultCard);
@@ -68,7 +68,7 @@ export function initDiagnosis() {
 
 // 診断カードを閉じ、マーカー・経路表示も消す (閉じるボタン・Escで共用)
 export function closeResultCard() {
-  $('resultCard').hidden = true;
+  closeDialog($('resultCard'));
   if (ctx.marker) ctx.marker.show = false;
   clearRoute(ctx.viewer);
 }
@@ -120,7 +120,7 @@ export async function runDiagnosis(
   $('resultTitle').textContent = placeName ?? t('diag.title');
   $('resultBody').innerHTML = `<div class="loading-dots">${t('diag.loading')}</div>`;
   $('makeCardBtn').hidden = true;
-  $('resultCard').hidden = false;
+  openDialog($('resultCard'), $('resultTitle'));
   if (isMobile()) $('panel').hidden = true; // モバイルでは結果カードと重なるため閉じる
 
   try {
@@ -275,7 +275,7 @@ function showShelterCard(s: Shelter) {
          href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}&travelmode=walking">${t('shelter.route')}</a>
     </div>
     <p class="result-note">${s.official ? t('shelter.srcOfficial') : t('shelter.srcGsi')}</p>`;
-  $('resultCard').hidden = false;
+  openDialog($('resultCard'), $('resultTitle'));
   if (isMobile()) $('panel').hidden = true;
 }
 

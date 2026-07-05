@@ -2,6 +2,7 @@ import { FLOOD_DEPTH_CLASSES, type BuildingStats } from './lib/geomath';
 import { RISK_COLORS, type BuildingRiskAnalyzer } from './buildingrisk';
 import { scanFloodGrid, type FloodScanResult } from './floodgrid';
 import { t } from './i18n';
+import { openDialog, closeDialog } from './app/ui';
 
 // 町全体統計ダッシュボード。
 //   - 浸水面積統計: ハザードタイル全域スキャン (町全体を常にカバー)
@@ -21,12 +22,14 @@ function bar(label: string, value: number, max: number, color: string, unit: str
 export function initDashboard(analyzer: BuildingRiskAnalyzer) {
   const card = $('dashCard');
   $('fabDash').addEventListener('click', () => {
-    card.hidden = !card.hidden;
-    if (!card.hidden) refresh();
+    if (card.hidden) {
+      openDialog(card, $('dashTitle'));
+      refresh();
+    } else {
+      closeDialog(card);
+    }
   });
-  $('dashClose').addEventListener('click', () => {
-    card.hidden = true;
-  });
+  $('dashClose').addEventListener('click', () => closeDialog(card));
 
   let areaStats: FloodScanResult | null = null;
   let scanError = false;
