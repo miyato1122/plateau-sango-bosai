@@ -49,7 +49,8 @@
 ```bash
 npm install
 npm run dev       # 開発サーバー
-npm test          # 単体テスト (タイル座標・色判定・距離計算・辞書整合性・実データ検証など)
+npm test          # 単体テスト (Vitest。タイル座標・色判定・距離計算・辞書整合性・実データ検証など)
+npm run typecheck # 型検査 (src/lib はstrict TypeScript)
 npm run build     # dist/ に静的ビルド
 npm run test:e2e  # PlaywrightによるE2Eスモーク (外部APIは全てモック、要ブラウザ)
 npm run lint      # oxlint (警告もエラー扱い)
@@ -62,7 +63,7 @@ npm run fmt       # oxfmt でJSを整形 (CSS/HTMLは手調整のため対象外
 以下で生成できます (OSM Overpass API と地理院配信タイルを取得するため、通信できる環境で実行):
 
 ```bash
-node scripts/build-road-network.mjs   # public/data/roads.json を生成
+npm run build:roads   # public/data/roads.json を生成 (tsx経由)
 ```
 
 生成物は © OpenStreetMap contributors (ODbL)。同梱・公開時の出典表記はアプリ内に記載済みです。

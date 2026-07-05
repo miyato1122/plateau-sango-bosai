@@ -1,12 +1,12 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   tileRange,
   enumerateTiles,
   fillTemplate,
   buildOfflineTileList,
-} from '../src/lib/offline-tiles.js';
-import { tileCoords } from '../src/lib/geomath.js';
+} from '../src/lib/offline-tiles';
+import { tileCoords } from '../src/lib/geomath';
 
 // 三郷町のbbox (src/config.js と同じ値)
 const BBOX = { west: 135.65, south: 34.565, east: 135.73, north: 34.625 };

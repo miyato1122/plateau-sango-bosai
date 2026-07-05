@@ -1,4 +1,4 @@
-import { FLOOD_DEPTH_CLASSES } from './lib/geomath.js';
+import { FLOOD_DEPTH_CLASSES } from './lib/geomath';
 import { RISK_COLORS } from './buildingrisk.js';
 import { scanFloodGrid } from './floodgrid.js';
 import { t } from './i18n.js';

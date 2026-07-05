@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   gsiDemDecode,
@@ -13,7 +13,7 @@ import {
   accumulateBuilding,
   FLOOD_DEPTH_CLASSES,
   DEPTH_REPRESENTATIVE,
-} from '../src/lib/geomath.js';
+} from '../src/lib/geomath';
 
 test('gsiDemDecode: 地理院標高PNG仕様', () => {
   assert.equal(gsiDemDecode(0, 0, 0), 0); // 標高0m

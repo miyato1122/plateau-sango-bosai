@@ -2,7 +2,7 @@
 // 保存先キャッシュ名は public/sw.js と一致させること。
 import { CITY_BBOX, GSI_PALE, GSI_DEM } from './config.js';
 import { HAZARD_LAYERS } from './hazards.js';
-import { buildOfflineTileList } from './lib/offline-tiles.js';
+import { buildOfflineTileList } from './lib/offline-tiles';
 
 const TILE_CACHE = 'sango-tiles-v1';
 const APP_CACHE = 'sango-app-v1';

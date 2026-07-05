@@ -1,8 +1,8 @@
 import * as Cesium from 'cesium';
 import { CITY_BBOX } from './config.js';
 import { fetchCityDatasets } from './plateau.js';
-import { parseOfficialShelters, findGeoJsonDataset } from './lib/geomath.js';
-export { nearestShelter, distanceMeters } from './lib/geomath.js';
+import { parseOfficialShelters, findGeoJsonDataset } from './lib/geomath';
+export { nearestShelter, distanceMeters } from './lib/geomath';
 
 // 避難施設の取得。優先順:
 //   1. PLATEAUデータカタログAPIの「避難施設」GeoJSON (最新の公式配信)

@@ -1,7 +1,7 @@
 // 安全避難ルートの表示 (道路網データがある場合のみ有効化)。
 // public/data/roads.json は scripts/build-road-network.mjs で生成する。
 import * as Cesium from 'cesium';
-import { buildGraph, findRoute } from './lib/route.js';
+import { buildGraph, findRoute } from './lib/route';
 
 let roadsPromise = null;
 let graph = null;

@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -11,7 +11,7 @@ import {
   pickBuildingDatasets,
   findGeoJsonDataset,
   FLOOD_DEPTH_CLASSES,
-} from '../src/lib/geomath.js';
+} from '../src/lib/geomath';
 
 const CITY_BBOX = { west: 65, south: 34.565, east: 135.73, north: 34.625 };
 CITY_BBOX.west = 135.65;

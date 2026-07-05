@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
 import { fetchCityDatasets } from './plateau.js';
-import { findGeoJsonDataset } from './lib/geomath.js';
+import { findGeoJsonDataset } from './lib/geomath';
 
 // 町データオーバーレイ (PLATEAU関連データセット)。
 // データカタログAPIで実行時にURLを解決し、なければ同梱ファイルを使う。

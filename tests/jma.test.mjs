@@ -1,6 +1,6 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { parseWarnings, summarizeWarnings, WARNING_CODES } from '../src/lib/jma.js';
+import { parseWarnings, summarizeWarnings, WARNING_CODES } from '../src/lib/jma';
 
 // 気象庁 warning JSON の代表的な形 (奈良県 290000 相当の抜粋)
 const FIXTURE = {

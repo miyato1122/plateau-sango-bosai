@@ -7,7 +7,7 @@ import {
   sampleGrid,
   majorityClassIndex,
   classifyLandslideZone,
-} from './lib/geomath.js';
+} from './lib/geomath';
 
 // ハザードタイルのピクセル色を直接読み取って地点リスクを判定する。
 // タイルはCORS許可付きで配信されているためcanvasで解析できる。

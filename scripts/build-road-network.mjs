@@ -14,7 +14,7 @@ import {
   tileCoords,
   floodClassIndex,
   classifyLandslideZone,
-} from '../src/lib/geomath.js';
+} from '../src/lib/geomath';
 
 // 町域bbox (src/config.js の CITY_BBOX と同値。configはVite依存のため直接記述)
 const BBOX = { west: 135.65, south: 34.565, east: 135.73, north: 34.625 };

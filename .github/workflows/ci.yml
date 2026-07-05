@@ -18,6 +18,8 @@ jobs:
       - run: npm ci
       - name: Lint (oxlint)
         run: npm run lint
+      - name: 型検査 (tsc)
+        run: npm run typecheck
       - name: フォーマット検査 (oxfmt)
         run: npm run fmt:check
       - name: 単体テスト

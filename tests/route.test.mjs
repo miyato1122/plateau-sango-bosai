@@ -1,6 +1,6 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { edgeCost, nearestNode, findRoute, FLOOD_PENALTY } from '../src/lib/route.js';
+import { edgeCost, nearestNode, findRoute, FLOOD_PENALTY } from '../src/lib/route';
 import { waysToGraph } from '../scripts/build-road-network.mjs';
 
 // 東西600m×2本の道 (北=安全、南=浸水) を持つ「はしご」型グラフ:

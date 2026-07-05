@@ -1,11 +1,11 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   sampleGrid,
   majorityClassIndex,
   classifyLandslideZone,
   tileCoords,
-} from '../src/lib/geomath.js';
+} from '../src/lib/geomath';
 
 test('sampleGrid: 中心を先頭に9点を返し、間隔は1ピクセル相当', () => {
   const z = 16;
