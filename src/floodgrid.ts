@@ -9,7 +9,25 @@ import {
   gsiDemDecode,
   DEPTH_REPRESENTATIVE,
   FLOOD_DEPTH_CLASSES,
+  type Pixel,
 } from './lib/geomath';
+
+interface FloodCell {
+  west: number;
+  east: number;
+  north: number;
+  south: number;
+  classIdx: number;
+}
+
+export interface FloodScanResult {
+  cells: FloodCell[];
+  areaKm2: number[];
+  totalKm2: number;
+}
+
+type Progress = ((done: number, total: number) => void) | undefined;
+type Bbox = { west: number; south: number; east: number; north: number };
 
 // 洪水浸水想定タイルを町全域でスキャンし、
 //   1. 浸水深クラス別の面積統計
@@ -19,7 +37,12 @@ const FLOOD_Z = 15; // 3.9m/px
 const BLOCK = 16; // 16px = 約63m格子
 const DEM_Z = 14;
 
-function loadTileData(urlTemplate, z, x, y) {
+function loadTileData(
+  urlTemplate: string,
+  z: number,
+  x: number,
+  y: number,
+): Promise<Uint8ClampedArray | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -27,56 +50,63 @@ function loadTileData(urlTemplate, z, x, y) {
       const canvas = document.createElement('canvas');
       canvas.width = canvas.height = 256;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
       ctx.drawImage(img, 0, 0);
       resolve(ctx.getImageData(0, 0, 256, 256).data);
     };
     img.onerror = () => resolve(null);
-    img.src = urlTemplate.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+    img.src = urlTemplate
+      .replace('{z}', String(z))
+      .replace('{x}', String(x))
+      .replace('{y}', String(y));
   });
 }
 
-function tileRange(bbox, z) {
+function tileRange(bbox: Bbox, z: number) {
   const a = tileCoords(bbox.west, bbox.north, z);
   const b = tileCoords(bbox.east, bbox.south, z);
   return { x0: a.x, y0: a.y, x1: b.x, y1: b.y };
 }
 
 // DEMタイルをまとめて取得し、経度緯度→標高 の関数を返す
-async function buildElevationSampler(bbox) {
+async function buildElevationSampler(bbox: Bbox) {
   const { x0, y0, x1, y1 } = tileRange(bbox, DEM_Z);
-  const tiles = new Map();
-  const jobs = [];
+  const tiles = new Map<string, Uint8ClampedArray | null>();
+  const jobs: Array<Promise<unknown>> = [];
   for (let x = x0; x <= x1; x++) {
     for (let y = y0; y <= y1; y++) {
       jobs.push(loadTileData(GSI_DEM, DEM_Z, x, y).then((d) => tiles.set(`${x}/${y}`, d)));
     }
   }
   await Promise.all(jobs);
-  return (lon, lat) => {
+  return (lon: number, lat: number): number | null => {
     const { x, y, px, py } = tileCoords(lon, lat, DEM_Z);
     const data = tiles.get(`${x}/${y}`);
     if (!data) return null;
     const i = (py * 256 + px) * 4;
     if (data[i + 3] === 0) return null;
-    const h = gsiDemDecode(data[i], data[i + 1], data[i + 2]);
+    const h = gsiDemDecode(data[i]!, data[i + 1]!, data[i + 2]!);
     return h == null ? null : h + GEOID_OFFSET; // 楕円体高へ変換
   };
 }
 
 // 町全域の浸水タイルスキャン。結果はキャッシュして使い回す。
-let scanPromise = null;
-export function scanFloodGrid(onProgress) {
+let scanPromise: Promise<FloodScanResult> | null = null;
+export function scanFloodGrid(onProgress?: Progress): Promise<FloodScanResult> {
   scanPromise ??= (async () => {
     const bbox = CITY_BBOX;
     const { x0, y0, x1, y1 } = tileRange(bbox, FLOOD_Z);
     const total = (x1 - x0 + 1) * (y1 - y0 + 1);
     let done = 0;
 
-    const areaPixels = Array.from({ length: FLOOD_DEPTH_CLASSES.length }).fill(0);
-    const cells = [];
+    const areaPixels: number[] = Array.from({ length: FLOOD_DEPTH_CLASSES.length }, () => 0);
+    const cells: FloodCell[] = [];
     const cellDeg = 360 / 2 ** FLOOD_Z / (256 / BLOCK); // 経度方向のセル幅
 
-    const jobs = [];
+    const jobs: Array<Promise<void>> = [];
     for (let tx = x0; tx <= x1; tx++) {
       for (let ty = y0; ty <= y1; ty++) {
         jobs.push(
@@ -93,7 +123,8 @@ export function scanFloodGrid(onProgress) {
                   for (let px = bx * BLOCK; px < (bx + 1) * BLOCK; px++) {
                     const i = (py * 256 + px) * 4;
                     if (data[i + 3] === 0) continue;
-                    const idx = floodClassIndex({ r: data[i], g: data[i + 1], b: data[i + 2] });
+                    const pixel: Pixel = { r: data[i]!, g: data[i + 1]!, b: data[i + 2]!, a: 255 };
+                    const idx = floodClassIndex(pixel);
                     if (idx >= 0) {
                       areaPixels[idx] += 1;
                       if (idx > maxIdx) maxIdx = idx;
@@ -119,7 +150,7 @@ export function scanFloodGrid(onProgress) {
     const areaKm2 = areaPixels.map((n) => (n * mpp * mpp) / 1e6);
     return { cells, areaKm2, totalKm2: areaKm2.reduce((a, b) => a + b, 0) };
   })();
-  scanPromise.catch(() => {
+  void scanPromise.catch(() => {
     scanPromise = null;
   });
   return scanPromise;
@@ -127,21 +158,24 @@ export function scanFloodGrid(onProgress) {
 
 // 浸水深を実高さの半透明水柱として3D表示する
 const WATER_COLORS = ['#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#1d4ed8', '#312e81'];
-let waterPrimitive = null;
+let waterPrimitive: Cesium.Primitive | null = null;
 
-export async function buildWaterColumns(viewer, onProgress) {
+export async function buildWaterColumns(
+  viewer: Cesium.Viewer,
+  onProgress?: Progress,
+): Promise<Cesium.Primitive | null> {
   if (waterPrimitive) return waterPrimitive;
   const [{ cells }, elevation] = await Promise.all([
     scanFloodGrid(onProgress),
     buildElevationSampler(CITY_BBOX),
   ]);
-  const instances = [];
+  const instances: Cesium.GeometryInstance[] = [];
   for (const c of cells) {
     const lon = (c.west + c.east) / 2;
     const lat = (c.north + c.south) / 2;
     const base = elevation(lon, lat);
     if (base == null) continue;
-    const depth = DEPTH_REPRESENTATIVE[c.classIdx];
+    const depth = DEPTH_REPRESENTATIVE[c.classIdx]!;
     instances.push(
       new Cesium.GeometryInstance({
         geometry: new Cesium.RectangleGeometry({
@@ -152,20 +186,21 @@ export async function buildWaterColumns(viewer, onProgress) {
         }),
         attributes: {
           color: Cesium.ColorGeometryInstanceAttribute.fromColor(
-            Cesium.Color.fromCssColorString(WATER_COLORS[c.classIdx]).withAlpha(0.5),
+            Cesium.Color.fromCssColorString(WATER_COLORS[c.classIdx]!).withAlpha(0.5),
           ),
         },
       }),
     );
   }
   if (instances.length === 0) return null;
-  waterPrimitive = viewer.scene.primitives.add(
+  const primitive = viewer.scene.primitives.add(
     new Cesium.Primitive({
       geometryInstances: instances,
       appearance: new Cesium.PerInstanceColorAppearance({ translucent: true, closed: true }),
       asynchronous: true,
     }),
-  );
-  waterPrimitive.show = false;
-  return waterPrimitive;
+  ) as Cesium.Primitive;
+  primitive.show = false;
+  waterPrimitive = primitive;
+  return primitive;
 }

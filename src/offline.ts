@@ -3,6 +3,7 @@
 import { CITY_BBOX, GSI_PALE, GSI_DEM } from './config';
 import { HAZARD_LAYERS } from './hazards';
 import { buildOfflineTileList } from './lib/offline-tiles';
+// vite-plugin-pwa の仮想モジュール (型は vite-plugin-pwa/client が提供)
 import { registerSW } from 'virtual:pwa-register';
 
 const TILE_CACHE = 'sango-tiles-v1';
@@ -11,14 +12,14 @@ const META_KEY = 'sango-offline-meta';
 
 // Service Workerを登録する。新バージョン検知時は onNeedRefresh(適用関数) を呼ぶ
 // (適用関数を実行すると新SWへ切り替えてページを再読み込みする)。
-export function registerServiceWorker(onNeedRefresh) {
+export function registerServiceWorker(onNeedRefresh?: (apply: () => void) => void): void {
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
       onNeedRefresh?.(() => updateSW(true));
     },
-    onRegisterError(err) {
+    onRegisterError(err: unknown) {
       console.warn('Service Worker登録に失敗:', err);
     },
   });
@@ -55,7 +56,7 @@ function offlineSources() {
 // 町内の地図・ハザードタイルと避難所データを端末に保存する。
 // ハザードタイルの404は「区域外」を意味する正常応答なので、
 // オフラインでも同じ判定になるよう404として記録する。
-export async function saveOfflineArea(onProgress) {
+export async function saveOfflineArea(onProgress?: (done: number, total: number) => void) {
   if (!offlineSupported()) {
     throw new Error('この端末・ブラウザはオフライン保存に対応していません');
   }
@@ -71,6 +72,7 @@ export async function saveOfflineArea(onProgress) {
   async function worker() {
     while (queue.length > 0) {
       const url = queue.shift();
+      if (!url) break;
       try {
         const res = await fetch(url, { mode: 'cors' });
         if (res.ok) {
@@ -115,7 +117,7 @@ export async function saveOfflineArea(onProgress) {
 }
 
 // オフライン状態バナーの制御。ページ側のUI要素に反映する。
-export function watchOnlineState(onChange) {
+export function watchOnlineState(onChange: (online: boolean) => void): void {
   const notify = () => onChange(navigator.onLine);
   window.addEventListener('online', notify);
   window.addEventListener('offline', notify);

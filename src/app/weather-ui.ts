@@ -1,11 +1,11 @@
 // 気象警報バナー (三郷町に警報・注意報が発表中のときだけ表示)
 import { startWeatherWatch, JMA_PAGE_URL } from '../weather';
 import { t } from '../i18n';
-import { $, listSep } from './ui.js';
+import { $, listSep } from './ui';
 
 export function initWeatherBanner() {
   startWeatherWatch((summary) => {
-    const banner = $('weatherBanner');
+    const banner = $('weatherBanner') as HTMLAnchorElement;
     if (!summary) {
       banner.hidden = true;
       return;

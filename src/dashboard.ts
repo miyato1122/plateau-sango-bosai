@@ -1,14 +1,14 @@
-import { FLOOD_DEPTH_CLASSES } from './lib/geomath';
-import { RISK_COLORS } from './buildingrisk.js';
-import { scanFloodGrid } from './floodgrid.js';
+import { FLOOD_DEPTH_CLASSES, type BuildingStats } from './lib/geomath';
+import { RISK_COLORS, type BuildingRiskAnalyzer } from './buildingrisk';
+import { scanFloodGrid, type FloodScanResult } from './floodgrid';
 import { t } from './i18n';
 
 // 町全体統計ダッシュボード。
 //   - 浸水面積統計: ハザードタイル全域スキャン (町全体を常にカバー)
 //   - 建物統計: 3D Tiles属性の漸進集計 (読み込み済み建物が対象)
-const $ = (id) => document.getElementById(id);
+const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
 
-function bar(label, value, max, color, unit) {
+function bar(label: string, value: number, max: number, color: string, unit: string) {
   const pct = max > 0 ? Math.max(2, (value / max) * 100) : 0;
   return `
     <div class="stat-row">
@@ -18,7 +18,7 @@ function bar(label, value, max, color, unit) {
     </div>`;
 }
 
-export function initDashboard(analyzer) {
+export function initDashboard(analyzer: BuildingRiskAnalyzer) {
   const card = $('dashCard');
   $('fabDash').addEventListener('click', () => {
     card.hidden = !card.hidden;
@@ -28,7 +28,7 @@ export function initDashboard(analyzer) {
     card.hidden = true;
   });
 
-  let areaStats = null;
+  let areaStats: FloodScanResult | null = null;
   let scanError = false;
 
   async function refresh() {
@@ -50,18 +50,18 @@ export function initDashboard(analyzer) {
     if (areaStats) renderArea(areaStats);
   }
 
-  function renderArea({ areaKm2, totalKm2 }) {
+  function renderArea({ areaKm2, totalKm2 }: FloodScanResult) {
     const max = Math.max(...areaKm2);
     const classes = t('floodClasses');
     $('dashArea').innerHTML = `
       <p class="dash-headline">${t('dash.areaHead', { km2: totalKm2.toFixed(2) })}</p>
       ${FLOOD_DEPTH_CLASSES.map((cls, i) =>
-        bar(classes[i].label, areaKm2[i], max, cls.css, t('dash.unitKm2')),
+        bar(classes[i]!.label, areaKm2[i]!, max, cls.css, t('dash.unitKm2')),
       ).join('')}
       <p class="result-note">${t('dash.areaNote')}</p>`;
   }
 
-  function renderBuildings(stats, hasAttrs) {
+  function renderBuildings(stats: BuildingStats, hasAttrs: boolean) {
     if (!hasAttrs || stats.total === 0) {
       $('dashBuildings').innerHTML = `
         <p class="result-note">${stats.total === 0 ? t('dash.bldgWait') : t('dash.bldgNoAttr')}</p>`;
@@ -76,8 +76,8 @@ export function initDashboard(analyzer) {
         atRisk: atRisk.toLocaleString(),
         vert: stats.verticalEvacuationRisk.toLocaleString(),
       })}</p>
-      ${FLOOD_DEPTH_CLASSES.map((cls, i) =>
-        bar(classes[i].label, stats.byClass[i], max, RISK_COLORS[i], t('dash.unitBldg')),
+      ${FLOOD_DEPTH_CLASSES.map((_cls, i) =>
+        bar(classes[i]!.label, stats.byClass[i]!, max, RISK_COLORS[i]!, t('dash.unitBldg')),
       ).join('')}
       <p class="result-note">${t('dash.bldgNote')}</p>`;
   }

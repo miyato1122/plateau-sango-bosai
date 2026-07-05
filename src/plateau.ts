@@ -39,7 +39,10 @@ export function fetchCityDatasets() {
   return inflight;
 }
 
-export async function loadBuildingTilesets(viewer, onStatus) {
+export async function loadBuildingTilesets(
+  viewer: Cesium.Viewer,
+  onStatus?: (msg: string) => void,
+) {
   const datasets = await fetchCityDatasets();
   if (datasets.length === 0) {
     throw new Error('データカタログに三郷町(29343)のデータが見つかりませんでした');
@@ -49,9 +52,10 @@ export async function loadBuildingTilesets(viewer, onStatus) {
     throw new Error('建築物モデル(3D Tiles)が見つかりませんでした');
   }
 
-  const tilesets = [];
+  const tilesets: Cesium.Cesium3DTileset[] = [];
   for (const d of targets) {
-    onStatus?.(`建物モデル読込中: ${d.name}`);
+    if (typeof d.url !== 'string') continue;
+    onStatus?.(`建物モデル読込中: ${String(d.name ?? '')}`);
     const tileset = await Cesium.Cesium3DTileset.fromUrl(d.url, {
       maximumScreenSpaceError: 16,
     });

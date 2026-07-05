@@ -7,11 +7,11 @@ import {
   PLATEAU_ION_TOKEN,
   PLATEAU_TERRAIN_CREDIT,
 } from '../config';
-import { GsiTerrainProvider } from '../gsiterrain.js';
-import { ctx } from './context.js';
-import { $, setStatus } from './ui.js';
+import { GsiTerrainProvider } from '../gsiterrain';
+import { ctx } from './context';
+import { $, setStatus } from './ui';
 
-export function initViewer() {
+export function initViewer(): Cesium.Viewer {
   // トークンがある場合のみ設定 (空のままだとCesium同梱の既定トークンに依存してしまう)
   if (PLATEAU_ION_TOKEN) Cesium.Ion.defaultAccessToken = PLATEAU_ION_TOKEN;
 
@@ -45,7 +45,7 @@ export function initViewer() {
   return viewer;
 }
 
-export function flyHome(duration = 1.2) {
+export function flyHome(duration = 1.2): void {
   ctx.viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(HOME_VIEW.lon, HOME_VIEW.lat, HOME_VIEW.height),
     orientation: {
@@ -58,7 +58,7 @@ export function flyHome(duration = 1.2) {
 }
 
 // 診断地点の上空へ移動 (現在地・住所検索・共有リンクで共通)
-export function flyToPoint(lon, lat, duration = 1.5) {
+export function flyToPoint(lon: number, lat: number, duration = 1.5): void {
   ctx.viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.008, 1500),
     orientation: { heading: 0, pitch: Cesium.Math.toRadians(-40), roll: 0 },

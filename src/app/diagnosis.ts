@@ -3,15 +3,16 @@
 import * as Cesium from 'cesium';
 import { CITY_BBOX } from '../config';
 import { FLOOD_DEPTH_CLASSES } from '../hazards';
-import { nearestShelter } from '../shelters.js';
+import { nearestShelter } from '../shelters';
 import { diagnosePoint } from '../risk';
-import { compassIndex } from '../lib/geomath';
+import { compassIndex, type FloodDepthInfo, type Shelter } from '../lib/geomath';
+import type { BuildingInfo } from '../buildingrisk';
 import { track } from '../lib/metrics';
 import { t } from '../i18n';
-import { openEvacCard } from '../evaccard.js';
-import { loadRoads, showSafeRoute, clearRoute } from '../saferoute.js';
-import { ctx } from './context.js';
-import { $, toast, escapeHtml, listSep, isMobile } from './ui.js';
+import { openEvacCard } from '../evaccard';
+import { loadRoads, showSafeRoute, clearRoute } from '../saferoute';
+import { ctx } from './context';
+import { $, toast, escapeHtml, listSep, isMobile } from './ui';
 
 export function initDiagnosis() {
   $('resultClose').addEventListener('click', closeResultCard);
@@ -28,13 +29,18 @@ export function initDiagnosis() {
 
   // 地図タップで診断。建物タップはその建物の診断、避難所タップは施設カード。
   const handler = new Cesium.ScreenSpaceEventHandler(ctx.viewer.canvas);
-  handler.setInputAction((movement) => {
+  handler.setInputAction((movement: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
     const viewer = ctx.viewer;
-    const picked = viewer.scene.pick(movement.position);
+    const picked: unknown = viewer.scene.pick(movement.position);
+    const pickedId =
+      Cesium.defined(picked) && typeof picked === 'object' && picked !== null && 'id' in picked
+        ? (picked as { id: unknown }).id
+        : undefined;
 
     // 避難所などのエンティティ → 専用カード
-    if (Cesium.defined(picked) && picked.id instanceof Cesium.Entity && picked.id !== ctx.marker) {
-      if (picked.id.sangoShelter) showShelterCard(picked.id.sangoShelter);
+    if (pickedId instanceof Cesium.Entity && pickedId !== ctx.marker) {
+      const shelter = (pickedId as Cesium.Entity & { sangoShelter?: Shelter }).sangoShelter;
+      if (shelter) showShelterCard(shelter);
       return;
     }
 
@@ -67,7 +73,7 @@ export function closeResultCard() {
   clearRoute(ctx.viewer);
 }
 
-function showMarker(lon, lat) {
+function showMarker(lon: number, lat: number) {
   if (!ctx.marker) {
     ctx.marker = ctx.viewer.entities.add({
       position: Cesium.Cartesian3.fromDegrees(lon, lat),
@@ -81,27 +87,34 @@ function showMarker(lon, lat) {
       },
     });
   }
-  ctx.marker.position = Cesium.Cartesian3.fromDegrees(lon, lat);
-  ctx.marker.show = true;
+  ctx.marker!.position = new Cesium.ConstantPositionProperty(
+    Cesium.Cartesian3.fromDegrees(lon, lat),
+  );
+  ctx.marker!.show = true;
 }
 
-const inCity = (lon, lat) =>
+const inCity = (lon: number, lat: number) =>
   lon >= CITY_BBOX.west &&
   lon <= CITY_BBOX.east &&
   lat >= CITY_BBOX.south &&
   lat <= CITY_BBOX.north;
 
 // 浸水深クラスの現在言語での表記 (凡例色は公式色を維持)
-function floodClassText(flood) {
-  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood);
+function floodClassText(flood: FloodDepthInfo) {
+  const idx = FLOOD_DEPTH_CLASSES.indexOf(flood as (typeof FLOOD_DEPTH_CLASSES)[number]);
   if (idx >= 0) {
-    const cls = t('floodClasses')[idx];
+    const cls = t('floodClasses')[idx]!;
     return { label: cls.label, advice: cls.advice, css: flood.css };
   }
   return { label: t('flood.unknown'), advice: t('flood.unknownAdvice'), css: flood.css };
 }
 
-export async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
+export async function runDiagnosis(
+  lon: number,
+  lat: number,
+  placeName?: string,
+  extraRowHtml = '',
+) {
   showMarker(lon, lat);
   clearRoute(ctx.viewer);
   $('resultTitle').textContent = placeName ?? t('diag.title');
@@ -115,7 +128,7 @@ export async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
     ctx.lastDiagnosis = { lon, lat, name: placeName ?? null, risk };
     $('makeCardBtn').hidden = false;
     track('diagnosis');
-    const rows = [];
+    const rows: string[] = [];
     if (extraRowHtml) rows.push(extraRowHtml);
 
     if (risk.flood) {
@@ -141,8 +154,10 @@ export async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
     }
 
     // 家屋倒壊等氾濫想定区域 (浸水深によらず立退き避難が必要)
-    const kk = risk.kaokutoukai ?? {};
-    const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(Boolean);
+    const kk = risk.kaokutoukai;
+    const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(
+      (v): v is string => Boolean(v),
+    );
     if (kkTypes.length) {
       rows.push(`
         <div class="risk-row bad"><span class="icon">🏚️</span>
@@ -152,12 +167,12 @@ export async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
 
     // 土砂災害: 特別警戒区域 (レッドゾーン) と警戒区域を分けて表示
     const ls = risk.landslide;
-    const typesOf = (zone) =>
+    const typesOf = (zone: 'special' | 'warning') =>
       [
         ls.dosekiryu === zone && t('ls.dosekiryu'),
         ls.kyukeisha === zone && t('ls.kyukeisha'),
         ls.jisuberi === zone && t('ls.jisuberi'),
-      ].filter(Boolean);
+      ].filter((v): v is string => Boolean(v));
     const specialTypes = typesOf('special');
     const warningTypes = typesOf('warning');
     if (specialTypes.length) {
@@ -185,7 +200,7 @@ export async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
     if (nearest) {
       const { shelter: s, dist } = nearest;
       const minutes = Math.max(1, Math.ceil(dist / 80)); // 徒歩80m/分
-      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)];
+      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)]!;
       const meta = t('shelter.meta', { dir, dist: Math.round(dist), min: minutes });
       rows.push(`
         <div class="shelter-row">${t('shelter.nearest')}
@@ -211,7 +226,7 @@ export async function runDiagnosis(lon, lat, placeName, extraRowHtml = '') {
 }
 
 // 安全避難ルートのボタン (道路網データ public/data/roads.json がある場合のみ表示)
-async function attachSafeRoute(lon, lat, shelter) {
+async function attachSafeRoute(lon: number, lat: number, shelter: Shelter) {
   if (!(await loadRoads())) return;
   const box = $('safeRouteBox');
   if (!box || !document.contains(box)) return; // 診断が更新済みなら何もしない
@@ -249,7 +264,7 @@ async function attachSafeRoute(lon, lat, shelter) {
 }
 
 // 避難所カード (InfoBoxの代わり)
-function showShelterCard(s) {
+function showShelterCard(s: Shelter) {
   $('makeCardBtn').hidden = true;
   $('resultTitle').textContent = t('shelter.info');
   $('resultBody').innerHTML = `
@@ -265,8 +280,8 @@ function showShelterCard(s) {
 }
 
 // 建物クリック時の追加情報行
-function buildingInfoRow(info) {
-  const parts = [];
+function buildingInfoRow(info: BuildingInfo) {
+  const parts: string[] = [];
   if (info.usage) parts.push(escapeHtml(info.usage));
   if (info.height) parts.push(escapeHtml(t('bldg.height', { h: info.height.toFixed(1) })));
   if (info.storeys) parts.push(escapeHtml(t('bldg.storeys', { n: info.storeys })));
@@ -274,7 +289,7 @@ function buildingInfoRow(info) {
   const rank =
     info.classIdx >= 0
       ? `<div class="meta">${t('bldg.rankLabel')}
-        <span class="depth-chip" style="background:${FLOOD_DEPTH_CLASSES[info.classIdx].css}">${escapeHtml(t('floodClasses')[info.classIdx].label)}</span>
+        <span class="depth-chip" style="background:${FLOOD_DEPTH_CLASSES[info.classIdx]!.css}">${escapeHtml(t('floodClasses')[info.classIdx]!.label)}</span>
         ${
           info.classIdx >= 2 && info.storeys != null && info.storeys <= 2
             ? `<b class="dash-danger">${escapeHtml(t('bldg.vertWarn'))}</b>`

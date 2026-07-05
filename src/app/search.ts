@@ -1,8 +1,14 @@
 // 現在地診断・住所検索 (地理院ジオコーダ)・共有リンク (?loc=) の処理
 import { t } from '../i18n';
-import { $, toast } from './ui.js';
-import { flyToPoint } from './viewer.js';
-import { runDiagnosis } from './diagnosis.js';
+
+/** 地理院ジオコーダの結果 (必要なフィールドのみ) */
+interface GeocoderHit {
+  geometry: { coordinates: [number, number] };
+  properties?: { title?: string };
+}
+import { $, $input, toast } from './ui';
+import { flyToPoint } from './viewer';
+import { runDiagnosis } from './diagnosis';
 
 export function initSearch() {
   initLocate();
@@ -32,16 +38,16 @@ function initLocate() {
 
 // ---- 住所検索 (地理院ジオコーダ) ----
 function initAddressSearch() {
-  const search = async (query) => {
+  const search = async (query: string): Promise<GeocoderHit[]> => {
     const res = await fetch(
       `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`,
     );
     if (!res.ok) return [];
-    return res.json();
+    return res.json() as Promise<GeocoderHit[]>;
   };
   $('searchBar').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const q = $('searchInput').value.trim();
+    const q = $input('searchInput').value.trim();
     if (!q) return;
     try {
       let results = await search(q.includes('三郷') ? q : `奈良県生駒郡三郷町${q}`);
@@ -54,7 +60,7 @@ function initAddressSearch() {
       const [lon, lat] = hit.geometry.coordinates;
       flyToPoint(lon, lat);
       runDiagnosis(lon, lat, hit.properties?.title ?? q);
-      $('searchInput').blur();
+      $input('searchInput').blur();
     } catch (err) {
       console.error(err);
       toast(t('err.search'));

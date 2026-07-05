@@ -9,19 +9,23 @@ import { gsiDemDecode } from './lib/geomath';
 const MAX_LEVEL = 14; // dem_png (DEM10B 約10m解像度) の最大ズーム
 const SAMPLES = 65; // 1タイルあたりの標高サンプル数 (65×65)
 
+// Cesiumの TerrainProvider インターフェースを満たすカスタム実装
 export class GsiTerrainProvider {
+  tilingScheme = new Cesium.WebMercatorTilingScheme();
+  errorEvent = new Cesium.Event();
+  credit = new Cesium.Credit('地理院標高タイル');
+  availability = undefined;
+  hasWaterMask = false;
+  hasVertexNormals = false;
+  ready = true;
+  private _resource = new Cesium.Resource({ url: GSI_DEM });
+  private _context: CanvasRenderingContext2D;
+  private _levelZeroError: number;
+
   constructor() {
-    this.tilingScheme = new Cesium.WebMercatorTilingScheme();
-    this.errorEvent = new Cesium.Event();
-    this.credit = new Cesium.Credit('地理院標高タイル');
-    this.availability = undefined;
-    this.hasWaterMask = false;
-    this.hasVertexNormals = false;
-    this.ready = true;
-    this._resource = new Cesium.Resource({ url: GSI_DEM });
-    this._canvas = document.createElement('canvas');
-    this._canvas.width = this._canvas.height = 256;
-    this._context = this._canvas.getContext('2d', { willReadFrequently: true });
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    this._context = canvas.getContext('2d', { willReadFrequently: true })!;
     this._levelZeroError = Cesium.TerrainProvider.getEstimatedLevelZeroGeometricErrorForAHeightmap(
       this.tilingScheme.ellipsoid,
       SAMPLES,
@@ -29,19 +33,24 @@ export class GsiTerrainProvider {
     );
   }
 
-  getLevelMaximumGeometricError(level) {
+  getLevelMaximumGeometricError(level: number): number {
     return this._levelZeroError / (1 << level);
   }
 
-  getTileDataAvailable(x, y, level) {
+  getTileDataAvailable(_x: number, _y: number, level: number): boolean {
     return level <= MAX_LEVEL;
   }
 
-  loadTileDataAvailability() {
+  loadTileDataAvailability(): undefined {
     return undefined;
   }
 
-  requestTileGeometry(x, y, level, request) {
+  requestTileGeometry(
+    x: number,
+    y: number,
+    level: number,
+    request?: Cesium.Request,
+  ): Promise<Cesium.HeightmapTerrainData> | undefined {
     const resource = this._resource.getDerivedResource({
       templateValues: { z: level, x, y },
       request,
@@ -50,13 +59,13 @@ export class GsiTerrainProvider {
     if (!Cesium.defined(promise)) return undefined; // リクエスト過多時はCesium側が再試行する
     return (
       Promise.resolve(promise)
-        .then((image) => this._decode(image, level))
+        .then((image) => this._decode(image as CanvasImageSource, level))
         // 海域・日本域外などタイルが無い場合は標高0の平面 (子タイルなし) を返す
         .catch(() => this._flatTile())
     );
   }
 
-  _flatTile() {
+  private _flatTile(): Cesium.HeightmapTerrainData {
     return new Cesium.HeightmapTerrainData({
       buffer: new Float32Array(SAMPLES * SAMPLES).fill(GEOID_OFFSET),
       width: SAMPLES,
@@ -65,7 +74,7 @@ export class GsiTerrainProvider {
     });
   }
 
-  _decode(image, level) {
+  private _decode(image: CanvasImageSource, level: number): Cesium.HeightmapTerrainData {
     const size = 256;
     this._context.drawImage(image, 0, 0, size, size);
     const pixels = this._context.getImageData(0, 0, size, size).data;
@@ -76,7 +85,7 @@ export class GsiTerrainProvider {
         const px = Math.round((col * (size - 1)) / (SAMPLES - 1));
         const i = (py * size + px) * 4;
         const h =
-          pixels[i + 3] === 0 ? null : gsiDemDecode(pixels[i], pixels[i + 1], pixels[i + 2]);
+          pixels[i + 3] === 0 ? null : gsiDemDecode(pixels[i]!, pixels[i + 1]!, pixels[i + 2]!);
         heights[row * SAMPLES + col] = (h ?? 0) + GEOID_OFFSET;
       }
     }
