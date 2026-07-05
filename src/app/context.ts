@@ -21,13 +21,33 @@ interface AppContext {
   marker: Entity | null;
 }
 
-// viewer/riskAnalyzer は起動シーケンス先頭で必ず設定されるため、
-// 利用側の null チェックを省くために non-null として型付けする。
+// viewer/riskAnalyzer は起動シーケンス先頭で必ず設定される前提でnon-nullに型付けし、
+// 万一初期化前に触れた場合は (undefinedのまま動き続けず) 即座に原因が分かるよう例外にする
+let viewer: Viewer | null = null;
+let riskAnalyzer: BuildingRiskAnalyzer | null = null;
+
+function required<T>(value: T | null, name: string): T {
+  if (!value) {
+    throw new Error(`ctx.${name} が未初期化です。src/main.ts の起動順で先に初期化してください`);
+  }
+  return value;
+}
+
 export const ctx: AppContext = {
-  viewer: null as unknown as Viewer,
+  get viewer() {
+    return required(viewer, 'viewer');
+  },
+  set viewer(v: Viewer) {
+    viewer = v;
+  },
+  get riskAnalyzer() {
+    return required(riskAnalyzer, 'riskAnalyzer');
+  },
+  set riskAnalyzer(a: BuildingRiskAnalyzer) {
+    riskAnalyzer = a;
+  },
   shelters: [],
   buildingTilesets: [],
-  riskAnalyzer: null as unknown as BuildingRiskAnalyzer,
   lastDiagnosis: null,
   marker: null,
 };

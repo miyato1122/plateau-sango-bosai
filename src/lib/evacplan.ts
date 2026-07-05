@@ -1,6 +1,10 @@
 // 避難カードの「わが家の避難方針」を診断結果から決める純粋ロジック。
-// 返り値はi18n辞書のキー配列 (文言・翻訳は src/i18n.js が持つ)。
+// 返り値はi18n辞書のキー配列 (文言・翻訳は src/i18n.ts が持つ)。
 import type { LandslideZone } from './geomath';
+import type { MsgKey } from '../i18n';
+
+/** 避難方針の辞書キー (辞書に実在する policy.* キーだけを許す) */
+export type PolicyKey = Extract<MsgKey, `policy.${string}`>;
 
 export interface EvacInput {
   /** 浸水深クラス添字 (-1=区域外, 0=0.5m未満, 1=0.5〜3m, 2以上=3m以上) */
@@ -18,8 +22,8 @@ export function evacuationPolicies({
   keizoku,
   landslide,
   kaokutoukai = false,
-}: EvacInput): string[] {
-  const keys: string[] = [];
+}: EvacInput): PolicyKey[] {
+  const keys: PolicyKey[] = [];
   // 家屋倒壊等氾濫想定区域は浸水深によらず立退き避難が必要
   if (kaokutoukai) {
     keys.push('policy.kaokutoukai');

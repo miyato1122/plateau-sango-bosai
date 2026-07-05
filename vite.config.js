@@ -27,14 +27,14 @@ export default defineConfig({
   plugins: [
     cesium(),
     bundleCesiumLicense(),
-    // Service Workerは手書き (src/sw.js) を維持し、ハッシュ付きアセットの
+    // Service Workerは手書き (src/sw.ts) を維持し、ハッシュ付きアセットの
     // precache一覧の注入と更新検知 (virtual:pwa-register) のみプラグインに任せる。
     // Cesiumの静的ファイル群は巨大なためprecacheせず、実行時キャッシュに任せる。
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
-      filename: 'sw.js',
-      injectRegister: false, // 登録は src/offline.js が行う
+      filename: 'sw.ts',
+      injectRegister: false, // 登録は src/offline.ts が行う
       manifest: false, // 既存の public/manifest.webmanifest を使う
       devOptions: { enabled: false },
       injectManifest: {

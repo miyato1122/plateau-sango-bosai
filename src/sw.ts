@@ -4,15 +4,21 @@
  *   - アプリ本体 (同一オリジン): ハッシュ付きアセットはキャッシュ優先、
  *     ナビゲーションはネットワーク優先 (オフライン時はキャッシュしたシェル)
  *   - 地図タイル (地理院・ハザードマップポータル): キャッシュ優先。
- *     「オフラインに保存」機能 (src/offline.js) が同じキャッシュへ事前保存する
+ *     「オフラインに保存」機能 (src/offline.ts) が同じキャッシュへ事前保存する
  *   - PLATEAUデータカタログAPI: ネットワーク優先 (オフライン時は前回結果)
  *   - 3D建物タイル (assets.cms.plateau.reearth.io): キャッシュ優先+エントリ数上限。
  *     事前保存はしないが「閲覧した範囲」は圏外でも3D表示できる (URLはハッシュ付き
  *     で不変のためキャッシュ優先が安全)
  *   - 地形・ジオコーダは素通し (オフライン価値が低いため)
  *
- * キャッシュ名は src/offline.js と一致させること。
+ * キャッシュ名は src/offline.ts と一致させること。
+ * 型検査は専用の tsconfig.sw.json (lib: WebWorker) で行う。
  */
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST?: Array<string | { url: string; revision: string | null }>;
+};
+export {};
+
 const VERSION = 'v1';
 const APP_CACHE = `sango-app-${VERSION}`;
 const TILE_CACHE = `sango-tiles-${VERSION}`;
@@ -59,7 +65,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-async function cacheFirst(request, cacheName) {
+async function cacheFirst(request: Request, cacheName: string): Promise<Response> {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(request);
   // オフライン保存が記録した「404 = 区域外」も含めてキャッシュを正とする
@@ -70,7 +76,11 @@ async function cacheFirst(request, cacheName) {
 }
 
 // キャッシュ優先 + エントリ数上限 (古いものから削除)。閲覧済み3D建物の保持に使う
-async function cacheFirstCapped(request, cacheName, maxEntries) {
+async function cacheFirstCapped(
+  request: Request,
+  cacheName: string,
+  maxEntries: number,
+): Promise<Response> {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(request);
   if (hit) return hit;
@@ -89,7 +99,11 @@ async function cacheFirstCapped(request, cacheName, maxEntries) {
   return response;
 }
 
-async function networkFirst(request, cacheName, fallbackUrl = null) {
+async function networkFirst(
+  request: Request,
+  cacheName: string,
+  fallbackUrl: string | null = null,
+): Promise<Response> {
   const cache = await caches.open(cacheName);
   try {
     const response = await fetch(request);
@@ -104,7 +118,7 @@ async function networkFirst(request, cacheName, fallbackUrl = null) {
 }
 
 // 同一オリジンの非ハッシュ資産 (データ・manifest等): キャッシュを返しつつ裏で更新
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request: Request, cacheName: string): Promise<Response> {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(request);
   const refresh = fetch(request)
