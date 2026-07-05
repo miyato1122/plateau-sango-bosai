@@ -27,12 +27,42 @@ export function registerServiceWorker(onNeedRefresh?: (apply: () => void) => voi
 
 export const offlineSupported = () => 'serviceWorker' in navigator && 'caches' in window;
 
-export function offlineMeta() {
+export interface OfflineMeta {
+  savedAt: number;
+  ok: number;
+  notFound: number;
+  failed: number;
+  total: number;
+}
+
+export function offlineMeta(): OfflineMeta | null {
   try {
-    return JSON.parse(localStorage.getItem(META_KEY) ?? 'null');
+    return JSON.parse(localStorage.getItem(META_KEY) ?? 'null') as OfflineMeta | null;
   } catch {
     return null;
   }
+}
+
+// 端末ストレージの使用量 (MB)。取得できない環境ではnull
+export async function offlineUsage(): Promise<number | null> {
+  try {
+    const est = await navigator.storage?.estimate?.();
+    return est?.usage != null ? est.usage / 1048576 : null;
+  } catch {
+    return null;
+  }
+}
+
+// 保存した町内データを削除する (タイル・避難所データ・保存メタ情報)
+export async function clearOfflineArea(): Promise<void> {
+  await caches.delete(TILE_CACHE);
+  try {
+    const appCache = await caches.open(APP_CACHE);
+    await appCache.delete('./data/shelter.geojson');
+  } catch {
+    /* アプリ本体キャッシュはSWが管理するため失敗しても支障なし */
+  }
+  localStorage.removeItem(META_KEY);
 }
 
 // 町域をカバーするオフライン保存対象:
@@ -59,6 +89,13 @@ function offlineSources() {
 export async function saveOfflineArea(onProgress?: (done: number, total: number) => void) {
   if (!offlineSupported()) {
     throw new Error('この端末・ブラウザはオフライン保存に対応していません');
+  }
+  // ストレージ逼迫時にブラウザが保存データを自動削除しないよう永続化を要求する
+  // (災害時に頼るデータのため。拒否されても保存自体は続行)
+  try {
+    await navigator.storage?.persist?.();
+  } catch {
+    /* 非対応ブラウザでは何もしない */
   }
   const tileCache = await caches.open(TILE_CACHE);
   const appCache = await caches.open(APP_CACHE);

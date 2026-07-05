@@ -3,7 +3,9 @@ import {
   registerServiceWorker,
   offlineSupported,
   offlineMeta,
+  offlineUsage,
   saveOfflineArea,
+  clearOfflineArea,
   watchOnlineState,
 } from '../offline';
 import { track } from '../lib/metrics';
@@ -24,8 +26,9 @@ export function initOfflineUi() {
   initBadge();
 }
 
-function renderOfflineNote() {
+async function renderOfflineNote() {
   const meta = offlineMeta();
+  $('offlineDelete').hidden = !meta;
   if (!meta) {
     $('offline-note').textContent = t('offline.none');
     return;
@@ -35,7 +38,12 @@ function renderOfflineNote() {
     currentLang() === 'en'
       ? `${d.getMonth() + 1}/${d.getDate()}`
       : `${d.getMonth() + 1}月${d.getDate()}日`;
-  $('offline-note').textContent = t('offline.saved', { date, count: meta.ok + meta.notFound });
+  let text = t('offline.saved', { date, count: meta.ok + meta.notFound });
+  const usedMb = await offlineUsage();
+  if (usedMb != null && offlineMeta()) {
+    text += ` — ${t('offline.usage', { mb: Math.max(1, Math.round(usedMb)) })}`;
+  }
+  $('offline-note').textContent = text;
 }
 
 function initSaveButton() {
@@ -45,8 +53,9 @@ function initSaveButton() {
     $('offline-note').textContent = t('offline.unsupported');
     return;
   }
-  renderOfflineNote();
-  document.addEventListener('sango:langchange', renderOfflineNote);
+  void renderOfflineNote();
+  document.addEventListener('sango:langchange', () => void renderOfflineNote());
+  initDeleteButton();
   offlineSaveBtn.addEventListener('click', async () => {
     if (!navigator.onLine) {
       toast(t('offline.needOnline'));
@@ -57,7 +66,7 @@ function initSaveButton() {
       await saveOfflineArea((done, total) => {
         $('offline-note').textContent = t('offline.saving', { done, total });
       });
-      renderOfflineNote();
+      await renderOfflineNote();
       track('offline_save');
       toast(t('offline.done'));
     } catch (err) {
@@ -66,6 +75,24 @@ function initSaveButton() {
       toast(err instanceof Error ? err.message : t('offline.failed'));
     } finally {
       offlineSaveBtn.disabled = false;
+    }
+  });
+}
+
+function initDeleteButton() {
+  const deleteBtn = $('offlineDelete') as HTMLButtonElement;
+  deleteBtn.addEventListener('click', async () => {
+    if (!window.confirm(t('offline.deleteConfirm'))) return;
+    deleteBtn.disabled = true;
+    try {
+      await clearOfflineArea();
+      toast(t('offline.deleted'));
+    } catch (err) {
+      console.error(err);
+      toast(t('offline.failed'));
+    } finally {
+      deleteBtn.disabled = false;
+      await renderOfflineNote();
     }
   });
 }
