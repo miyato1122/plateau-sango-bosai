@@ -48,3 +48,18 @@ jobs:
             'https://msearch.gsi.go.jp/address-search/AddressSearch?q=%E4%B8%89%E9%83%B7%E7%94%BA')
           echo "HTTP $code"
           test "$code" = "200"
+
+  # 配色変更の検知: 診断はタイルのピクセル色に依存するため、
+  # 配信側がパレットを変えると (E2Eはモックのため) 静かに誤判定になる。
+  # アプリと同じ分類器で町内の洪水タイルを判定し、整合が崩れたら赤くする。
+  palette:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 洪水タイルの配色がアプリの分類器で判定できるか
+        run: npx tsx scripts/check-hazard-palette.mjs
