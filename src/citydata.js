@@ -1,6 +1,7 @@
 import * as Cesium from 'cesium';
 import { fetchCityDatasets } from './plateau.js';
 import { findGeoJsonDataset } from './lib/geomath';
+import { isFeatureCollection } from './lib/validate';
 
 // 町データオーバーレイ (PLATEAU関連データセット)。
 // データカタログAPIで実行時にURLを解決し、なければ同梱ファイルを使う。
@@ -35,14 +36,20 @@ export async function loadCityOverlay(viewer, key) {
     const ds = findGeoJsonDataset(datasets, def.typeEn);
     if (ds) {
       const res = await fetch(ds.url);
-      if (res.ok) geojson = await res.json();
+      if (res.ok) {
+        const json = await res.json();
+        if (isFeatureCollection(json)) geojson = json;
+      }
     }
   } catch {
     /* カタログ不通時は同梱ファイルへ */
   }
   if (!geojson) {
     const res = await fetch(def.localFile).catch(() => null);
-    if (res?.ok) geojson = await res.json();
+    if (res?.ok) {
+      const json = await res.json().catch(() => null);
+      if (isFeatureCollection(json)) geojson = json;
+    }
   }
   if (!geojson) return null;
 

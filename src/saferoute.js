@@ -2,6 +2,7 @@
 // public/data/roads.json は scripts/build-road-network.mjs で生成する。
 import * as Cesium from 'cesium';
 import { buildGraph, findRoute } from './lib/route';
+import { parseRoadsData } from './lib/validate';
 
 let roadsPromise = null;
 let graph = null;
@@ -11,8 +12,9 @@ let routeEntities = [];
 export function loadRoads() {
   roadsPromise ??= fetch('./data/roads.json')
     .then((res) => (res.ok ? res.json() : null))
-    .then((data) => {
-      if (!data || data.version !== 1 || !Array.isArray(data.nodes)) return null;
+    .then((raw) => {
+      const data = parseRoadsData(raw);
+      if (!data) return null;
       graph = buildGraph(data);
       return data;
     })
