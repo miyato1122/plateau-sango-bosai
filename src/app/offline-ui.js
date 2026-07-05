@@ -11,7 +11,15 @@ import { t, currentLang } from '../i18n.js';
 import { $, toast } from './ui.js';
 
 export function initOfflineUi() {
-  registerServiceWorker();
+  registerServiceWorker((applyUpdate) => {
+    const banner = $('updateBanner');
+    banner.textContent = `🔄 ${t('app.updateReady')}`;
+    banner.hidden = false;
+    banner.addEventListener('click', () => {
+      banner.disabled = true;
+      applyUpdate();
+    });
+  });
   initSaveButton();
   initBadge();
 }

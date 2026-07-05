@@ -286,6 +286,19 @@ html, body {
 /* 気象バナーとオフラインバッジの重なり回避 */
 #weatherBanner:not([hidden]) ~ #offlineBadge { top: calc(56px + var(--safe-top)); }
 
+/* アプリ更新バナー */
+#updateBanner {
+  position: absolute; z-index: 60; left: 50%; transform: translateX(-50%);
+  bottom: calc(96px + var(--safe-bottom));
+  border: none; cursor: pointer;
+  background: #0f3a5f; color: #fff;
+  padding: 11px 20px; border-radius: 24px;
+  font-size: calc(13px * var(--fs, 1)); font-weight: 700; font-family: inherit;
+  max-width: calc(100vw - 24px);
+  box-shadow: var(--shadow);
+}
+#updateBanner:disabled { opacity: 0.6; cursor: default; }
+
 /* ---- オフライン ---- */
 #offlineBadge {
   position: absolute; z-index: 45; left: 50%; transform: translateX(-50%);

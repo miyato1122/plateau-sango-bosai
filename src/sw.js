@@ -22,6 +22,10 @@ const TILES3D_CACHE = `sango-3dtiles-${VERSION}`;
 const TILES3D_MAX_ENTRIES = 400;
 
 const CORE_ASSETS = ['./', './index.html', './manifest.webmanifest'];
+// ビルド時に vite-plugin-pwa がハッシュ付きアセット一覧を注入する
+const PRECACHE_URLS = (self.__WB_MANIFEST || []).map((entry) =>
+  typeof entry === 'string' ? entry : entry.url,
+);
 
 // タイル配信ホスト (キャッシュ優先の対象)
 const TILE_HOSTS = ['cyberjapandata.gsi.go.jp', 'disaportaldata.gsi.go.jp'];
@@ -29,12 +33,18 @@ const TILE_HOSTS = ['cyberjapandata.gsi.go.jp', 'disaportaldata.gsi.go.jp'];
 const TILES3D_HOST = 'assets.cms.plateau.reearth.io';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(APP_CACHE)
-      .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
-  );
+  // CORE_ASSETSとprecache一覧は同じファイルを指し得るため、絶対URLで重複排除する
+  // (Cache.addAll は重複リクエストがあると失敗する)
+  const urls = [
+    ...new Set([...CORE_ASSETS, ...PRECACHE_URLS].map((u) => new URL(u, self.location.href).href)),
+  ];
+  event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(urls)));
+});
+
+// 新バージョンの適用は「更新があります」バナーの操作で行う
+// (virtual:pwa-register の updateSW() がこのメッセージを送る)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -45,7 +55,7 @@ self.addEventListener('activate', (event) => {
         if (!keep.includes(key)) await caches.delete(key);
       }
       await self.clients.claim();
-    })()
+    })(),
   );
 });
 
@@ -87,8 +97,7 @@ async function networkFirst(request, cacheName, fallbackUrl = null) {
     return response;
   } catch (err) {
     const hit =
-      (await cache.match(request)) ??
-      (fallbackUrl ? await cache.match(fallbackUrl) : null);
+      (await cache.match(request)) ?? (fallbackUrl ? await cache.match(fallbackUrl) : null);
     if (hit) return hit;
     throw err;
   }

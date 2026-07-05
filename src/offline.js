@@ -3,17 +3,24 @@
 import { CITY_BBOX, GSI_PALE, GSI_DEM } from './config.js';
 import { HAZARD_LAYERS } from './hazards.js';
 import { buildOfflineTileList } from './lib/offline-tiles';
+import { registerSW } from 'virtual:pwa-register';
 
 const TILE_CACHE = 'sango-tiles-v1';
 const APP_CACHE = 'sango-app-v1';
 const META_KEY = 'sango-offline-meta';
 
-export function registerServiceWorker() {
+// Service Workerを登録する。新バージョン検知時は onNeedRefresh(適用関数) を呼ぶ
+// (適用関数を実行すると新SWへ切り替えてページを再読み込みする)。
+export function registerServiceWorker(onNeedRefresh) {
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./sw.js')
-      .catch((err) => console.warn('Service Worker登録に失敗:', err));
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      onNeedRefresh?.(() => updateSW(true));
+    },
+    onRegisterError(err) {
+      console.warn('Service Worker登録に失敗:', err);
+    },
   });
 }
 
