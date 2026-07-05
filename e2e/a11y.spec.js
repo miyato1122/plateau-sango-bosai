@@ -42,6 +42,17 @@ test('axe: 避難カード (モーダル) 表示中に違反がない', async ({
   expect(violations).toEqual([]);
 });
 
+test('axe: ダークモードでも起動時・診断カードに違反がない', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await expect(page.locator('#hazardChips .chip')).toHaveCount(7);
+  expect((await axeCheck(page)).violations).toEqual([]);
+  await page.fill('#searchInput', '勢野西');
+  await page.press('#searchInput', 'Enter');
+  await expect(page.locator('#resultBody')).toContainText('0.5〜3.0m', { timeout: 15000 });
+  expect((await axeCheck(page)).violations).toEqual([]);
+});
+
 test('フォーカス管理: 診断カードは開くと見出しへ移り、Escで閉じると検索欄へ戻る', async ({
   page,
 }) => {
