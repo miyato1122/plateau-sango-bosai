@@ -1,6 +1,7 @@
 import * as Cesium from 'cesium';
 import { CITY_CODE, PLATEAU_DATASETS_API } from './config.js';
 import { pickBuildingDatasets } from './lib/geomath';
+import { parseCatalogDatasets } from './lib/validate';
 
 const CACHE_KEY = `plateau-datasets-${CITY_CODE}`;
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -13,7 +14,8 @@ export function fetchCityDatasets() {
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null');
       if (cached && Date.now() - cached.savedAt < CACHE_TTL_MS) {
-        return cached.datasets;
+        const datasets = parseCatalogDatasets(cached.datasets);
+        if (datasets) return datasets;
       }
     } catch {
       /* キャッシュ破損時は取得し直す */
@@ -21,9 +23,9 @@ export function fetchCityDatasets() {
     const res = await fetch(PLATEAU_DATASETS_API);
     if (!res.ok) throw new Error(`データカタログAPIの取得に失敗 (HTTP ${res.status})`);
     const json = await res.json();
-    const datasets = (json.datasets ?? []).filter(
-      (d) => d.city_code === CITY_CODE || d.ward_code === CITY_CODE,
-    );
+    const all = parseCatalogDatasets(json);
+    if (!all) throw new Error('データカタログAPIの応答形式が想定と異なります');
+    const datasets = all.filter((d) => d.city_code === CITY_CODE || d.ward_code === CITY_CODE);
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), datasets }));
     } catch {
