@@ -5,8 +5,31 @@
 //   三郷町の市町村等コード (class20) = 2934300 (市区町村コード29343 + "00")。
 // ※ コード体系は気象庁の内部仕様で予告なく変わり得るため、実環境での表示確認を推奨。
 
+export type WarningLevel = 'special' | 'warning' | 'advisory';
+
+export interface ActiveWarning {
+  code: string;
+  name: string;
+  level: WarningLevel;
+}
+
+export interface WarningSummary {
+  level: WarningLevel;
+  names: string[];
+}
+
+/** 気象庁 warning JSON (必要なフィールドのみの緩い型) */
+export interface JmaWarningFeed {
+  areaTypes?: Array<{
+    areas?: Array<{
+      code?: string | number;
+      warnings?: Array<{ code?: string | number | null; status?: string } | null> | null;
+    } | null> | null;
+  } | null> | null;
+}
+
 // 警報・注意報コード → 名称と区分
-export const WARNING_CODES = {
+export const WARNING_CODES: Record<string, { name: string; level: WarningLevel }> = {
   '02': { name: '暴風雪警報', level: 'warning' },
   '03': { name: '大雨警報', level: 'warning' },
   '04': { name: '洪水警報', level: 'warning' },
@@ -38,12 +61,15 @@ export const WARNING_CODES = {
   38: { name: '高潮特別警報', level: 'special' },
 };
 
-const LEVEL_ORDER = { special: 0, warning: 1, advisory: 2 };
+const LEVEL_ORDER: Record<WarningLevel, number> = { special: 0, warning: 1, advisory: 2 };
 
 // 警報JSONから対象地域の発表中の警報・注意報を取り出す。
 // 返り値: [{ code, name, level }] を深刻度順に。対象地域が見つからなければ []。
-export function parseWarnings(json, areaCode) {
-  const result = [];
+export function parseWarnings(
+  json: JmaWarningFeed | null | undefined,
+  areaCode: string | number,
+): ActiveWarning[] {
+  const result: ActiveWarning[] = [];
   for (const areaType of json?.areaTypes ?? []) {
     for (const area of areaType?.areas ?? []) {
       if (String(area?.code) !== String(areaCode)) continue;
@@ -60,14 +86,16 @@ export function parseWarnings(json, areaCode) {
     }
   }
   // 深刻度順・重複除去
-  const seen = new Set();
+  const seen = new Set<string>();
   return result
     .sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level])
-    .filter((w) => (seen.has(w.code) ? false : seen.add(w.code)));
+    .filter((w) => (seen.has(w.code) ? false : (seen.add(w.code), true)));
 }
 
 // バナー表示用の要約: 最も深刻な区分と名称一覧
-export function summarizeWarnings(warnings) {
+export function summarizeWarnings(
+  warnings: ActiveWarning[] | null | undefined,
+): WarningSummary | null {
   if (!warnings || warnings.length === 0) return null;
   return {
     level: warnings[0].level,

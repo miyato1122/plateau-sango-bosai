@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
 import { CITY_CODE, PLATEAU_DATASETS_API } from './config.js';
-import { pickBuildingDatasets } from './lib/geomath.js';
+import { pickBuildingDatasets } from './lib/geomath';
 
 const CACHE_KEY = `plateau-datasets-${CITY_CODE}`;
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;

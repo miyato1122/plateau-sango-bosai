@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
 import { GSI_DEM, GEOID_OFFSET } from './config.js';
-import { gsiDemDecode } from './lib/geomath.js';
+import { gsiDemDecode } from './lib/geomath';
 
 // 地理院標高タイル (dem_png) からCesium地形を生成するTerrainProvider。
 // Cesium Ionトークン不要で日本全域の3D地形を表示できる。

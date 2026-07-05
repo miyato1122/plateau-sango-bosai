@@ -6,7 +6,7 @@ import {
   saveOfflineArea,
   watchOnlineState,
 } from '../offline.js';
-import { track } from '../lib/metrics.js';
+import { track } from '../lib/metrics';
 import { t, currentLang } from '../i18n.js';
 import { $, toast } from './ui.js';
 

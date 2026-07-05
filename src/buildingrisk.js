@@ -7,7 +7,7 @@ import {
   createBuildingStats,
   accumulateBuilding,
   FLOOD_DEPTH_CLASSES,
-} from './lib/geomath.js';
+} from './lib/geomath';
 
 // PLATEAU 3D Tilesの建物属性 (CityGML災害リスク属性) を読み取り、
 //   - 建物ごとの浸水リスク色分け

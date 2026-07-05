@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-export { FLOOD_DEPTH_CLASSES } from './lib/geomath.js';
+export { FLOOD_DEPTH_CLASSES } from './lib/geomath';
 
 // 重ねるハザードマップ (国土地理院 disaportal) の配信タイル
 export const HAZARD_LAYERS = {

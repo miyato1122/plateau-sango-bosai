@@ -9,7 +9,7 @@ import {
   gsiDemDecode,
   DEPTH_REPRESENTATIVE,
   FLOOD_DEPTH_CLASSES,
-} from './lib/geomath.js';
+} from './lib/geomath';
 
 // 洪水浸水想定タイルを町全域でスキャンし、
 //   1. 浸水深クラス別の面積統計

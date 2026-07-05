@@ -1,7 +1,7 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { evacuationPolicies } from '../src/lib/evacplan.js';
-import { nearestShelters } from '../src/lib/geomath.js';
+import { evacuationPolicies } from '../src/lib/evacplan';
+import { nearestShelters } from '../src/lib/geomath';
 import { DICTS } from '../src/i18n.js';
 
 const LS_NONE = { dosekiryu: null, kyukeisha: null, jisuberi: null };

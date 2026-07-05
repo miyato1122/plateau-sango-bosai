@@ -1,7 +1,7 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { DICTS, t, setLang, LANGS } from '../src/i18n.js';
-import { FLOOD_DEPTH_CLASSES } from '../src/lib/geomath.js';
+import { FLOOD_DEPTH_CLASSES } from '../src/lib/geomath';
 
 test('全言語の辞書キーが日本語辞書と一致する', () => {
   const jaKeys = Object.keys(DICTS.ja).sort();

@@ -1,10 +1,25 @@
 // 避難カードの「わが家の避難方針」を診断結果から決める純粋ロジック。
 // 返り値はi18n辞書のキー配列 (文言・翻訳は src/i18n.js が持つ)。
-//   floodIdx: 浸水深クラス添字 (-1=区域外, 0=0.5m未満, 1=0.5〜3m, 2以上=3m以上)
-//   keizoku: 浸水継続時間の想定区域内か
-//   landslide: { dosekiryu, kyukeisha, jisuberi } 各 null|'warning'|'special'
-export function evacuationPolicies({ floodIdx, keizoku, landslide, kaokutoukai = false }) {
-  const keys = [];
+import type { LandslideZone } from './geomath';
+
+export interface EvacInput {
+  /** 浸水深クラス添字 (-1=区域外, 0=0.5m未満, 1=0.5〜3m, 2以上=3m以上) */
+  floodIdx: number;
+  /** 浸水継続時間の想定区域内か */
+  keizoku: boolean;
+  /** 土砂災害の区域種別 (種類ごと) */
+  landslide: Record<string, LandslideZone> | null | undefined;
+  /** 家屋倒壊等氾濫想定区域か */
+  kaokutoukai?: boolean;
+}
+
+export function evacuationPolicies({
+  floodIdx,
+  keizoku,
+  landslide,
+  kaokutoukai = false,
+}: EvacInput): string[] {
+  const keys: string[] = [];
   // 家屋倒壊等氾濫想定区域は浸水深によらず立退き避難が必要
   if (kaokutoukai) {
     keys.push('policy.kaokutoukai');

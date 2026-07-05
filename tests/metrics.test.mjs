@@ -1,6 +1,6 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { track, metricsSnapshot } from '../src/lib/metrics.js';
+import { track, metricsSnapshot } from '../src/lib/metrics';
 
 function fakeStorage(init = {}) {
   const map = new Map(Object.entries(init));

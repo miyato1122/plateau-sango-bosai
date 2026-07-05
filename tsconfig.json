@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true
+  },
+  // 段階導入: まず純粋ロジック層 (src/lib) のみを型検査の対象にする。
+  // UI層 (src/app 等) の .ts 化は次段 (checkJs を有効にするのも可)。
+  "include": ["src/lib/**/*.ts"]
+}
