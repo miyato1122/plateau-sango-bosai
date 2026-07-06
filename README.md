@@ -48,6 +48,8 @@
 
 ## 開発・実行・テスト
 
+コード全体の構成・データの流れ・変更時の手引きは **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** にまとめています (コードを読む前にどうぞ)。
+
 ```bash
 npm install
 npm run dev       # 開発サーバー

@@ -1,14 +1,14 @@
 // 現在地診断・住所検索 (地理院ジオコーダ)・共有リンク (?loc=) の処理
 import { t } from '../i18n';
+import { $, $input, toast } from './ui';
+import { flyToPoint } from './viewer';
+import { runDiagnosis } from './diagnosis';
 
 /** 地理院ジオコーダの結果 (必要なフィールドのみ) */
 interface GeocoderHit {
   geometry: { coordinates: [number, number] };
   properties?: { title?: string };
 }
-import { $, $input, toast } from './ui';
-import { flyToPoint } from './viewer';
-import { runDiagnosis } from './diagnosis';
 
 export function initSearch() {
   initLocate();

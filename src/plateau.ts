@@ -1,18 +1,22 @@
 import * as Cesium from 'cesium';
 import { CITY_CODE, PLATEAU_DATASETS_API } from './config';
-import { pickBuildingDatasets } from './lib/geomath';
+import { pickBuildingDatasets, type CatalogDataset } from './lib/geomath';
 import { parseCatalogDatasets } from './lib/validate';
 
 const CACHE_KEY = `plateau-datasets-${CITY_CODE}`;
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // PLATEAUデータカタログAPIから三郷町のデータセット一覧を取得する。
-// レスポンスは約2MBあるため、町分のみをlocalStorageにキャッシュする。
-let inflight = null;
-export function fetchCityDatasets() {
+// レスポンスは約2MBあるため、町分のみをlocalStorageにキャッシュする (TTL 7日)。
+// 同時に複数箇所から呼ばれても取得は1回だけ (inflightをPromiseで共有)。
+let inflight: Promise<CatalogDataset[]> | null = null;
+export function fetchCityDatasets(): Promise<CatalogDataset[]> {
   inflight ??= (async () => {
     try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null');
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as {
+        savedAt: number;
+        datasets: unknown;
+      } | null;
       if (cached && Date.now() - cached.savedAt < CACHE_TTL_MS) {
         const datasets = parseCatalogDatasets(cached.datasets);
         if (datasets) return datasets;
@@ -22,7 +26,7 @@ export function fetchCityDatasets() {
     }
     const res = await fetch(PLATEAU_DATASETS_API);
     if (!res.ok) throw new Error(`データカタログAPIの取得に失敗 (HTTP ${res.status})`);
-    const json = await res.json();
+    const json: unknown = await res.json();
     const all = parseCatalogDatasets(json);
     if (!all) throw new Error('データカタログAPIの応答形式が想定と異なります');
     const datasets = all.filter((d) => d.city_code === CITY_CODE || d.ward_code === CITY_CODE);

@@ -1,5 +1,5 @@
 // さんごう防災3Dマップ — 起動シーケンス。
-// 実装は src/app/ 配下 (共有状態は src/app/context.js の ctx に集約)。
+// 実装は src/app/ 配下 (共有状態は src/app/context.ts の ctx に集約。コード全体の解説は docs/ARCHITECTURE.md)。
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import { initLanguage, initSettings } from './app/settings';
 import { initViewer } from './app/viewer';

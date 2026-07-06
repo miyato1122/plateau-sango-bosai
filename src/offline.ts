@@ -67,7 +67,7 @@ export async function clearOfflineArea(): Promise<void> {
 
 // 町域をカバーするオフライン保存対象:
 //   - 淡色地図 z11–16 (閲覧用ベースマップ)
-//   - ハザード4系統 z16 (地点診断 risk.js の判定ズーム) + 洪水 z15 (面積統計)
+//   - ハザード4系統 z16 (地点診断 risk.ts の判定ズーム) + 洪水 z15 (面積統計)
 //   - 標高 z14 (浸水3D表示)
 function offlineSources() {
   return [
