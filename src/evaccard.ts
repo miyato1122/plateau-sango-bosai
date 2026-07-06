@@ -5,6 +5,8 @@ import { nearestShelters, compassIndex, type Shelter } from './lib/geomath';
 import { evacuationPolicies } from './lib/evacplan';
 import { t, currentLang } from './i18n';
 import type { LastDiagnosis } from './app/context';
+import type { DiagnosisRisk } from './risk';
+import { landslideTypeNames, kaokutoukaiTypeNames, walkMinutes } from './app/risk-text';
 import {
   $,
   escapeHtml,
@@ -125,7 +127,7 @@ async function drawMap(canvas: HTMLCanvasElement, points: Point[]) {
 }
 
 // ---- カード生成 ----
-// diag: { lon, lat, name, risk } / shelters: 全避難所リスト
+// 手順: ①リスク要約 → ②避難方針 → ③避難先2件 → ④A4カードHTMLの流し込み → ⑤ボタン配線と地図描画
 export async function openEvacCard(
   diag: LastDiagnosis,
   shelters: Shelter[],
@@ -134,90 +136,145 @@ export async function openEvacCard(
   const { lon, lat, risk } = diag;
   const name = diag.name ?? t('card.pointFallback');
   const flood = risk.flood ? floodClassText(risk.flood) : null;
-  const floodIdx = flood ? flood.idx : -1;
 
-  // リスク要約行
-  const riskRows: string[] = [];
-  if (flood) {
-    riskRows.push(
-      `<li>🌊 ${t('diag.flood', {
-        chip: `<span class="depth-chip" style="background:${flood.css}">${escapeHtml(flood.label)}</span>`,
-      })}</li>`,
-    );
-  } else {
-    riskRows.push(`<li>🌊 ${t('diag.floodSafe')}</li>`);
-  }
-  if (risk.keizoku && flood) riskRows.push(`<li>⏳ ${t('diag.keizoku')}</li>`);
-  const kk = risk.kaokutoukai;
-  const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(
-    (v): v is string => Boolean(v),
-  );
-  if (kkTypes.length) {
-    riskRows.push(
-      `<li>🏚️ ${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}</li>`,
-    );
-  }
-  const ls = risk.landslide;
-  const typesOf = (zone: 'special' | 'warning') =>
-    [
-      ls.dosekiryu === zone && t('ls.dosekiryu'),
-      ls.kyukeisha === zone && t('ls.kyukeisha'),
-      ls.jisuberi === zone && t('ls.jisuberi'),
-    ].filter((v): v is string => Boolean(v));
-  const special = typesOf('special');
-  const warning = typesOf('warning');
-  if (special.length) {
-    riskRows.push(
-      `<li>⛰️ ${t('diag.landslideSpecial', { types: special.map(escapeHtml).join(listSep()) })}</li>`,
-    );
-  }
-  if (warning.length) {
-    riskRows.push(
-      `<li>⛰️ ${t('diag.landslide', { types: warning.map(escapeHtml).join(listSep()) })}</li>`,
-    );
-  }
-  if (!special.length && !warning.length) riskRows.push(`<li>⛰️ ${t('diag.landslideSafe')}</li>`);
+  // ① リスク要約 (診断カードと同じ判定結果を箇条書きにする)
+  const special = landslideTypeNames(risk.landslide, 'special');
+  const warning = landslideTypeNames(risk.landslide, 'warning');
+  const kkTypes = kaokutoukaiTypeNames(risk.kaokutoukai);
+  const riskRows = buildRiskList(risk, flood, kkTypes, special, warning);
 
-  // 避難方針
-  const zone = special.length ? 'special' : warning.length ? 'warning' : null;
+  // ② わが家の避難方針 (判断ロジックは lib/evacplan.ts。ここでは文言化のみ)
   const policies = evacuationPolicies({
-    floodIdx,
+    floodIdx: flood ? flood.idx : -1,
     keizoku: risk.keizoku,
     landslide: risk.landslide,
     kaokutoukai: kkTypes.length > 0,
   }).map((key) => t(key, { label: flood?.label ?? '' }));
 
-  // 避難先 (近い順2件)
-  const filter = flood ? '洪水' : zone ? '土砂' : null;
+  // ③ 避難先 (近い順2件)。対応災害フィルタは日本語の公式データ値と照合する
+  const filter = flood ? '洪水' : special.length + warning.length ? '土砂' : null;
   const nearest = nearestShelters(shelters, lon, lat, filter, 2);
-  const shelterRows = nearest
-    .map(({ shelter: s, dist }, i) => {
-      const minutes = Math.max(1, Math.ceil(dist / 80));
-      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)]!;
-      return `
+  const shelterRows = nearest.map((n, i) => shelterCardRow(lon, lat, n, i)).join('');
+
+  // ④ A4カードのHTMLを流し込む
+  const overlay = $('evacCard');
+  overlay.innerHTML = cardHtml({
+    name,
+    lon,
+    lat,
+    riskRows,
+    policies,
+    shelterRows,
+    share: shareUrl({ lat, lon, name: diag.name }),
+  });
+
+  // ⑤ 印刷用の全画面モーダル: フォーカスを閉じ込め、Escapeでも閉じられるようにする
+  openDialog(overlay, overlay.querySelector<HTMLElement>('#ecPrint'));
+  const untrap = trapModal(overlay, close);
+  function close() {
+    untrap();
+    closeDialog(overlay);
+  }
+
+  $('ecPrint').addEventListener('click', () => window.print());
+  $('ecClose').addEventListener('click', close);
+  $('ecCopy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl({ lat, lon, name: diag.name }));
+      toast?.(t('card.copied'));
+    } catch {
+      toast?.(t('card.copyFailed'));
+    }
+  });
+
+  // 地図は非同期に描画 (タイル不通でもマーカーは出す)
+  drawMap($('ecMap') as HTMLCanvasElement, [{ lon, lat }, ...nearest.map((n) => n.shelter)]).catch(
+    () => {},
+  );
+}
+
+// リスク要約の箇条書き。並びは診断カードと同じ: 浸水 → 継続時間 → 家屋倒壊等 → 土砂
+function buildRiskList(
+  risk: DiagnosisRisk,
+  flood: ReturnType<typeof floodClassText> | null,
+  kkTypes: string[],
+  special: string[],
+  warning: string[],
+): string[] {
+  const rows: string[] = [];
+  if (flood) {
+    rows.push(
+      `<li>🌊 ${t('diag.flood', {
+        chip: `<span class="depth-chip" style="background:${flood.css}">${escapeHtml(flood.label)}</span>`,
+      })}</li>`,
+    );
+  } else {
+    rows.push(`<li>🌊 ${t('diag.floodSafe')}</li>`);
+  }
+  if (risk.keizoku && flood) rows.push(`<li>⏳ ${t('diag.keizoku')}</li>`);
+  if (kkTypes.length) {
+    rows.push(
+      `<li>🏚️ ${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}</li>`,
+    );
+  }
+  if (special.length) {
+    rows.push(
+      `<li>⛰️ ${t('diag.landslideSpecial', { types: special.map(escapeHtml).join(listSep()) })}</li>`,
+    );
+  }
+  if (warning.length) {
+    rows.push(
+      `<li>⛰️ ${t('diag.landslide', { types: warning.map(escapeHtml).join(listSep()) })}</li>`,
+    );
+  }
+  if (!special.length && !warning.length) rows.push(`<li>⛰️ ${t('diag.landslideSafe')}</li>`);
+  return rows;
+}
+
+// 避難先1件分の行 (番号バッジ + 名称・住所・方角/距離/徒歩分数)
+function shelterCardRow(
+  lon: number,
+  lat: number,
+  { shelter: s, dist }: { shelter: Shelter; dist: number },
+  index: number,
+): string {
+  const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)]!;
+  return `
       <div class="ec-shelter">
-        <span class="ec-shelter-no">${i + 1}</span>
+        <span class="ec-shelter-no">${index + 1}</span>
         <div>
           <b>${escapeHtml(s.name)}</b>
           <div class="ec-meta">${escapeHtml(s.address)}</div>
-          <div class="ec-meta">${escapeHtml(t('shelter.meta', { dir, dist: Math.round(dist), min: minutes }))}</div>
+          <div class="ec-meta">${escapeHtml(t('shelter.meta', { dir, dist: Math.round(dist), min: walkMinutes(dist) }))}</div>
         </div>
       </div>`;
-    })
-    .join('');
+}
 
+// 作成日の表記 (印刷カードのヘッダ用)
+function createdDateLabel(): string {
   const now = new Date();
-  const dateStr =
-    currentLang() === 'en'
-      ? now.toLocaleDateString('en-US')
-      : `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+  return currentLang() === 'en'
+    ? now.toLocaleDateString('en-US')
+    : `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+}
 
-  const overlay = $('evacCard');
-  overlay.innerHTML = `
+// A4印刷カード全体のHTML。セクション構成:
+//   場所 → リスク → 避難方針 → 警戒レベル別行動 → 避難先 (+位置図) → 家族メモ → 免責/共有URL
+function cardHtml(parts: {
+  name: string;
+  lon: number;
+  lat: number;
+  riskRows: string[];
+  policies: string[];
+  shelterRows: string;
+  share: string;
+}): string {
+  const { name, lon, lat, riskRows, policies, shelterRows, share } = parts;
+  return `
     <div class="ec-sheet" role="document">
       <header class="ec-head" role="presentation">
         <h1>🛡️ ${t('card.title')}</h1>
-        <div class="ec-sub">${t('card.created')}: ${dateStr}｜さんごう防災3Dマップ</div>
+        <div class="ec-sub">${t('card.created')}: ${createdDateLabel()}｜さんごう防災3Dマップ</div>
       </header>
       <section>
         <h2>📍 ${t('card.place')}</h2>
@@ -259,7 +316,7 @@ export async function openEvacCard(
       </section>
       <footer class="ec-foot">
         <div>${t('card.disclaimer')}</div>
-        <div class="ec-url">${escapeHtml(shareUrl({ lat, lon, name: diag.name }))}</div>
+        <div class="ec-url">${escapeHtml(share)}</div>
       </footer>
     </div>
     <div class="ec-actions no-print">
@@ -267,27 +324,4 @@ export async function openEvacCard(
       <button type="button" class="action-btn ec-secondary" id="ecCopy">🔗 ${t('card.copyLink')}</button>
       <button type="button" class="action-btn ec-secondary" id="ecClose">✕ ${t('card.close')}</button>
     </div>`;
-  // 印刷用の全画面モーダル: フォーカスを閉じ込め、Escapeでも閉じられるようにする
-  openDialog(overlay, overlay.querySelector<HTMLElement>('#ecPrint'));
-  const untrap = trapModal(overlay, close);
-  function close() {
-    untrap();
-    closeDialog(overlay);
-  }
-
-  $('ecPrint').addEventListener('click', () => window.print());
-  $('ecClose').addEventListener('click', close);
-  $('ecCopy').addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl({ lat, lon, name: diag.name }));
-      toast?.(t('card.copied'));
-    } catch {
-      toast?.(t('card.copyFailed'));
-    }
-  });
-
-  // 地図は非同期に描画 (タイル不通でもマーカーは出す)
-  drawMap($('ecMap') as HTMLCanvasElement, [{ lon, lat }, ...nearest.map((n) => n.shelter)]).catch(
-    () => {},
-  );
 }

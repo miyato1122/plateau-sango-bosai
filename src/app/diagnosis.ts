@@ -4,13 +4,14 @@ import * as Cesium from 'cesium';
 import { CITY_BBOX } from '../config';
 import { FLOOD_DEPTH_CLASSES } from '../hazards';
 import { nearestShelter } from '../shelters';
-import { diagnosePoint } from '../risk';
+import { diagnosePoint, type DiagnosisRisk } from '../risk';
 import { compassIndex, type Shelter } from '../lib/geomath';
 import type { BuildingInfo } from '../buildingrisk';
 import { track } from '../lib/metrics';
 import { t } from '../i18n';
 import { openEvacCard } from '../evaccard';
 import { loadRoads, showSafeRoute, clearRoute } from '../saferoute';
+import { landslideTypeNames, kaokutoukaiTypeNames, walkMinutes } from './risk-text';
 import { ctx } from './context';
 import { requestRender } from './viewer';
 import {
@@ -131,81 +132,107 @@ export async function runDiagnosis(
     ctx.lastDiagnosis = { lon, lat, name: placeName ?? null, risk };
     $('makeCardBtn').hidden = false;
     track('diagnosis');
-    const rows: string[] = [];
-    if (extraRowHtml) rows.push(extraRowHtml);
 
-    if (risk.flood) {
-      const cls = floodClassText(risk.flood);
-      const chip = `<span class="depth-chip" style="background:${cls.css}">${escapeHtml(cls.label)}</span>`;
-      rows.push(`
+    const { html, nearest } = buildResultBody(lon, lat, risk, extraRowHtml);
+    $('resultBody').innerHTML = html;
+    if (nearest) attachSafeRoute(lon, lat, nearest.shelter);
+  } catch (err) {
+    console.error(err);
+    $('resultBody').innerHTML = `<p class="result-note">${t('err.diag')}</p>`;
+  }
+}
+
+// ---- 診断カード本文の組み立て ----
+// 行の並び: (建物情報) → 浸水 → 浸水継続時間 → 家屋倒壊等 → 土砂 → 最寄り避難所 → 注記
+
+function buildResultBody(lon: number, lat: number, risk: DiagnosisRisk, extraRowHtml: string) {
+  const rows: string[] = [];
+  if (extraRowHtml) rows.push(extraRowHtml);
+
+  rows.push(floodRow(risk.flood));
+
+  // 浸水継続時間の想定区域 (長期間水が引かないおそれ) は浸水想定がある場合のみ意味を持つ
+  if (risk.keizoku && risk.flood) {
+    rows.push(`
+        <div class="risk-row bad"><span class="icon">⏳</span>
+          <div>${t('diag.keizoku')}</div></div>`);
+  }
+
+  // 家屋倒壊等氾濫想定区域 (浸水深によらず立退き避難が必要)
+  const kkTypes = kaokutoukaiTypeNames(risk.kaokutoukai);
+  if (kkTypes.length) {
+    rows.push(`
+        <div class="risk-row bad"><span class="icon">🏚️</span>
+          <div>${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}
+            <span class="advice">${t('diag.kaokutoukaiAdvice')}</span></div></div>`);
+  }
+
+  // 土砂災害: 特別警戒区域 (レッドゾーン) と警戒区域を分けて表示
+  const specialTypes = landslideTypeNames(risk.landslide, 'special');
+  const warningTypes = landslideTypeNames(risk.landslide, 'warning');
+  rows.push(...landslideRows(specialTypes, warningTypes));
+
+  // 最寄り避難所。対応災害フィルタは日本語の公式データ値と照合する
+  const filter = risk.flood ? '洪水' : specialTypes.length + warningTypes.length ? '土砂' : null;
+  const nearest = ctx.shelters.length ? nearestShelter(ctx.shelters, lon, lat, filter) : null;
+  if (nearest) rows.push(shelterRow(lon, lat, nearest));
+
+  if (!inCity(lon, lat)) {
+    rows.push(`<p class="result-note">${t('note.outside')}</p>`);
+  }
+  rows.push(`<p class="result-note">${t('note.source')}</p>`);
+  return { html: rows.join(''), nearest };
+}
+
+// 浸水深の行 (区域内なら凡例色チップ + 助言、区域外なら安全表示)
+function floodRow(flood: DiagnosisRisk['flood']): string {
+  if (!flood) {
+    return `
+        <div class="risk-row ok"><span class="icon">🌊</span>
+          <div>${t('diag.floodSafe')}</div></div>`;
+  }
+  const cls = floodClassText(flood);
+  const chip = `<span class="depth-chip" style="background:${cls.css}">${escapeHtml(cls.label)}</span>`;
+  return `
         <div class="risk-row bad">
           <span class="icon">🌊</span>
           <div>${t('diag.flood', { chip })}
             <span class="advice">${escapeHtml(cls.advice ?? '')}</span></div>
-        </div>`);
-    } else {
-      rows.push(`
-        <div class="risk-row ok"><span class="icon">🌊</span>
-          <div>${t('diag.floodSafe')}</div></div>`);
-    }
+        </div>`;
+}
 
-    // 浸水継続時間の想定区域 (長期間水が引かないおそれ)
-    if (risk.keizoku && risk.flood) {
-      rows.push(`
-        <div class="risk-row bad"><span class="icon">⏳</span>
-          <div>${t('diag.keizoku')}</div></div>`);
-    }
-
-    // 家屋倒壊等氾濫想定区域 (浸水深によらず立退き避難が必要)
-    const kk = risk.kaokutoukai;
-    const kkTypes = [kk.hanran && t('ls.hanran'), kk.kagan && t('ls.kagan')].filter(
-      (v): v is string => Boolean(v),
-    );
-    if (kkTypes.length) {
-      rows.push(`
-        <div class="risk-row bad"><span class="icon">🏚️</span>
-          <div>${t('diag.kaokutoukai', { types: kkTypes.map(escapeHtml).join(listSep()) })}
-            <span class="advice">${t('diag.kaokutoukaiAdvice')}</span></div></div>`);
-    }
-
-    // 土砂災害: 特別警戒区域 (レッドゾーン) と警戒区域を分けて表示
-    const ls = risk.landslide;
-    const typesOf = (zone: 'special' | 'warning') =>
-      [
-        ls.dosekiryu === zone && t('ls.dosekiryu'),
-        ls.kyukeisha === zone && t('ls.kyukeisha'),
-        ls.jisuberi === zone && t('ls.jisuberi'),
-      ].filter((v): v is string => Boolean(v));
-    const specialTypes = typesOf('special');
-    const warningTypes = typesOf('warning');
-    if (specialTypes.length) {
-      rows.push(`
+// 土砂災害の行 (特別警戒区域・警戒区域それぞれ。どちらも無ければ安全表示1行)
+function landslideRows(specialTypes: string[], warningTypes: string[]): string[] {
+  const rows: string[] = [];
+  if (specialTypes.length) {
+    rows.push(`
         <div class="risk-row bad"><span class="icon">⛰️</span>
           <div>${t('diag.landslideSpecial', { types: specialTypes.map(escapeHtml).join(listSep()) })}
             <span class="advice">${t('diag.landslideSpecialAdvice')}</span></div></div>`);
-    }
-    if (warningTypes.length) {
-      rows.push(`
+  }
+  if (warningTypes.length) {
+    rows.push(`
         <div class="risk-row bad"><span class="icon">⛰️</span>
           <div>${t('diag.landslide', { types: warningTypes.map(escapeHtml).join(listSep()) })}
             <span class="advice">${t('diag.landslideAdvice')}</span></div></div>`);
-    }
-    if (!specialTypes.length && !warningTypes.length) {
-      rows.push(`
+  }
+  if (rows.length === 0) {
+    rows.push(`
         <div class="risk-row ok"><span class="icon">⛰️</span>
           <div>${t('diag.landslideSafe')}</div></div>`);
-    }
-    const lsTypes = [...specialTypes, ...warningTypes];
+  }
+  return rows;
+}
 
-    // 避難所の対応災害フィルタは日本語の公式データ値と照合する
-    const filter = risk.flood ? '洪水' : lsTypes.length ? '土砂' : null;
-    const nearest = ctx.shelters.length ? nearestShelter(ctx.shelters, lon, lat, filter) : null;
-    if (nearest) {
-      const { shelter: s, dist } = nearest;
-      const minutes = Math.max(1, Math.ceil(dist / 80)); // 徒歩80m/分
-      const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)]!;
-      const meta = t('shelter.meta', { dir, dist: Math.round(dist), min: minutes });
-      rows.push(`
+// 最寄り避難所の行 (方角・距離・徒歩分数 + Googleマップ経路リンク + 安全ルート差込先)
+function shelterRow(
+  lon: number,
+  lat: number,
+  { shelter: s, dist }: { shelter: Shelter; dist: number },
+): string {
+  const dir = t('dirs')[compassIndex(lon, lat, s.lon, s.lat)]!;
+  const meta = t('shelter.meta', { dir, dist: Math.round(dist), min: walkMinutes(dist) });
+  return `
         <div class="shelter-row">${t('shelter.nearest')}
           <div><b>${escapeHtml(s.name)}</b></div>
           <div class="meta">${escapeHtml(meta)}${s.kind ? `${listSep()}${escapeHtml(s.kind)}` : ''}</div>
@@ -213,19 +240,7 @@ export async function runDiagnosis(
              href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${s.lat},${s.lon}&travelmode=walking">
              ${t('shelter.route')}</a>
           <div id="safeRouteBox"></div>
-        </div>`);
-    }
-
-    if (!inCity(lon, lat)) {
-      rows.push(`<p class="result-note">${t('note.outside')}</p>`);
-    }
-    rows.push(`<p class="result-note">${t('note.source')}</p>`);
-    $('resultBody').innerHTML = rows.join('');
-    if (nearest) attachSafeRoute(lon, lat, nearest.shelter);
-  } catch (err) {
-    console.error(err);
-    $('resultBody').innerHTML = `<p class="result-note">${t('err.diag')}</p>`;
-  }
+        </div>`;
 }
 
 // 安全避難ルートのボタン (道路網データ public/data/roads.json がある場合のみ表示)
